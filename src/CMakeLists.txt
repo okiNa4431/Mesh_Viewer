@@ -1,7 +1,7 @@
 ﻿set(BUILD_TARGET "DirectX_exe")
 
 set(SOURCE_FILES
-    main.cpp Application.h Application.cpp Dx12Wrapper.h Dx12Wrapper.cpp io.h)
+    main.cpp Application.h Application.cpp Dx12Wrapper.h Dx12Wrapper.cpp io.h io.cpp renderer.h renderer.cpp)
 
 #実行ファイル生成
 add_executable(${BUILD_TARGET})
