@@ -77,9 +77,9 @@ void Application::Run()
 			break;
 		}
 
-		_dx12->BeginDraw();
+		_dx12->BeginDraw();//深度とレンダーターゲットとビューポート、シザー矩形
 
-		_dx12->EndDraw();
+		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら
 
 		//フリップ
 		_dx12->Swapchain()->Present(1, 0);

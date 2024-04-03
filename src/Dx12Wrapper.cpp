@@ -1,6 +1,5 @@
 #include <Windows.h>
 #include <dxgi1_6.h>
-#include <d3dcompiler.h>
 #include <wrl.h>
 #include "Dx12Wrapper.h"
 #include "Application.h"
@@ -10,7 +9,6 @@
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3dcompiler.lib")
 
 using namespace Microsoft::WRL;
 using namespace std;
