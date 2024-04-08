@@ -24,6 +24,7 @@ private:
 	//頂点とインデックス本体
 	vector<unsigned char> _vertices;
 	vector<unsigned int> _indices;
+
 public:
 	void LoadMesh(const string& filePath);
 	mesh(const string& filePath);

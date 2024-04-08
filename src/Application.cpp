@@ -57,6 +57,7 @@ Application& Application::Instance()
 
 bool Application::Init()
 {
+	//ウィンドウ関連
 	CreateGameWindow(_hwnd, _windowClass);
 	_dx12.reset(new Dx12Wrapper(_hwnd));
 	return true;
