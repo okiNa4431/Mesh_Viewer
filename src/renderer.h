@@ -10,8 +10,8 @@ class Dx12Wrapper;
 class renderer
 {
 private:
-	bool CreateSignature();
-	bool CreatePipeline();
+	HRESULT CreateSignature();
+	HRESULT CreatePipeline();
 	ComPtr<ID3D12PipelineState> _pls = nullptr;//本チャンのパイプライン
 	ComPtr<ID3D12RootSignature> _rootSignature = nullptr;//本チャンのルートシグネチャ
 	Dx12Wrapper& _dx12;

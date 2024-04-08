@@ -13,7 +13,7 @@
 using namespace Microsoft::WRL;
 using namespace std;
 
-bool renderer::CreateSignature()
+HRESULT renderer::CreateSignature()
 {
 	//ƒŒƒ“ƒW
 	CD3DX12_DESCRIPTOR_RANGE descRange[1] = {};
@@ -44,14 +44,14 @@ bool renderer::CreateSignature()
 	return result;
 }
 
-bool renderer::CreatePipeline()
+HRESULT renderer::CreatePipeline()
 {
 	//HLSL
 	ComPtr<ID3DBlob> vsBlob = nullptr;
 	ComPtr<ID3DBlob> psBlob = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 		//HLSL“Ç‚Ýž‚Ý
-	auto result = D3DCompileFromFile(L"BasicVertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicVS", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, vsBlob.ReleaseAndGetAddressOf(), errorBlob.ReleaseAndGetAddressOf());
+	auto result = D3DCompileFromFile(L"VertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicVS", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, vsBlob.ReleaseAndGetAddressOf(), errorBlob.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
 		if (result == __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
@@ -69,7 +69,7 @@ bool renderer::CreatePipeline()
 			printf(errstr.c_str());
 		}
 	}
-	result = D3DCompileFromFile(L"BasicPixelShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicPS", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, psBlob.ReleaseAndGetAddressOf(), errorBlob.ReleaseAndGetAddressOf());
+	result = D3DCompileFromFile(L"PixelShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicPS", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, psBlob.ReleaseAndGetAddressOf(), errorBlob.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
 		if (result == __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
@@ -123,7 +123,7 @@ bool renderer::CreatePipeline()
 	gpDesc.pRootSignature = _rootSignature.Get();
 	
 	//¶¬
-	auto result = _dx12.Device()->CreateGraphicsPipelineState(&gpDesc, IID_PPV_ARGS(_pls.ReleaseAndGetAddressOf()));
+	result = _dx12.Device()->CreateGraphicsPipelineState(&gpDesc, IID_PPV_ARGS(_pls.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) assert(SUCCEEDED(result));
 	return result;
 }
