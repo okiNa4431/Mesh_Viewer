@@ -3,7 +3,7 @@
 set(SOURCE_CPP_FILES
     main.cpp Application.h Application.cpp Dx12Wrapper.h Dx12Wrapper.cpp io.h io.cpp renderer.h renderer.cpp mesh.cpp mesh.h)
 
-file(GLOB SOURCE_SHA_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Shader/*.hlsl")
+file(GLOB SOURCE_SHA_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Shader/*.hlsl"　"${CMAKE_CURRENT_SOURCE_DIR}/Shader/*.hlsli")
 
 #実行ファイル生成
 add_executable(${BUILD_TARGET})
