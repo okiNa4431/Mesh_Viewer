@@ -2,9 +2,10 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <functional>
 
 using namespace std;
-typedef bool (*readingFunc)(const string&,vector<unsigned char>&, vector<unsigned int>&);
+using readingFunc = function<bool(const string&,vector<unsigned char>&, vector<unsigned int>&)>;
 
 class io
 {

@@ -7,6 +7,8 @@
 using namespace Microsoft::WRL;
 using namespace std;
 
+class Dx12Wrapper;
+
 class mesh
 {
 private:
@@ -25,8 +27,11 @@ private:
 	vector<unsigned char> _vertices;
 	vector<unsigned int> _indices;
 
+	//Wrapperから持ってくるデバイス
+	Dx12Wrapper& _dx12;
+
 public:
 	void LoadMesh(const string& filePath);
-	mesh(const string& filePath);
+	mesh(const string& filePath, Dx12Wrapper dx12);
 	~mesh();
 };
