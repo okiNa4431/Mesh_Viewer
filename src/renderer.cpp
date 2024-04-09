@@ -8,6 +8,7 @@
 #include <d3dcompiler.h>
 #include "Dx12Wrapper.h"
 
+
 #pragma comment(lib, "d3dcompiler.lib")
 
 using namespace Microsoft::WRL;
@@ -35,7 +36,7 @@ HRESULT renderer::CreateSignature()
 		assert(SUCCEEDED(result));
 		return result;
 	}
-	result = _dx12.Device()->CreateRootSignature(0, rsBlob->GetBufferPointer(), rsBlob->GetBufferSize(), IID_PPV_ARGS(_rootSignature.ReleaseAndGetAddressOf()));
+	result = _dx12->Device()->CreateRootSignature(0, rsBlob->GetBufferPointer(), rsBlob->GetBufferSize(), IID_PPV_ARGS(_rootSignature.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) {
 		assert(SUCCEEDED(result));
 		return result;
@@ -123,12 +124,12 @@ HRESULT renderer::CreatePipeline()
 	gpDesc.pRootSignature = _rootSignature.Get();
 	
 	//¶¬
-	result = _dx12.Device()->CreateGraphicsPipelineState(&gpDesc, IID_PPV_ARGS(_pls.ReleaseAndGetAddressOf()));
+	result = _dx12->Device()->CreateGraphicsPipelineState(&gpDesc, IID_PPV_ARGS(_pls.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) assert(SUCCEEDED(result));
 	return result;
 }
 
-renderer::renderer(Dx12Wrapper dx12) :_dx12(dx12)
+renderer::renderer(std::shared_ptr<Dx12Wrapper> dx12) : _dx12(dx12)
 {
 	assert(SUCCEEDED(CreateSignature()));
 	assert(SUCCEEDED(CreatePipeline()));
@@ -138,7 +139,31 @@ renderer::~renderer()
 {
 }
 
+void renderer::SetPipelineAndSignature()
+{
+	auto cmdList = _dx12->CommandList();
+	cmdList->SetPipelineState(_pls.Get());
+	cmdList->SetGraphicsRootSignature(_rootSignature.Get());
+}
+
 void renderer::Draw()
 {
+	for (auto& mesh : _meshes)
+	{
+		mesh->Draw();
+	}
+}
 
+void renderer::AddMesh(shared_ptr<mesh> mesh)
+{
+	printf("In Addmesh2\n");
+	_meshes.emplace_back(mesh);
+}
+
+void renderer::AddMesh(const std::string& filePath)
+{
+	printf("In Addmesh\n");
+	int users = _dx12.use_count();
+	printf("user: %d\n", users);
+	AddMesh(make_shared<mesh>(filePath, _dx12));
 }

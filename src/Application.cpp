@@ -59,7 +59,18 @@ bool Application::Init()
 {
 	//ウィンドウ関連
 	CreateGameWindow(_hwnd, _windowClass);
+	printf("after window\n");
+
+	//Wrapper初期化
 	_dx12.reset(new Dx12Wrapper(_hwnd));
+	printf("after Wrapper\n");
+
+	//レンダラー初期化
+	_renderer.reset(new renderer(_dx12));
+
+	//メッシュ読み込み
+	_renderer->AddMesh("C:\\Users\\NaokiMurakami\\3D Objects\\walkman.ply");
+	printf("after addmesh\n");
 	return true;
 }
 
@@ -79,7 +90,8 @@ void Application::Run()
 		}
 
 		_dx12->BeginDraw();//深度とレンダーターゲットとビューポート、シザー矩形
-
+		_renderer->SetPipelineAndSignature();//パイプラインとシグネチャのセット
+		_renderer->Draw();//rendererの保持するmeshのDraw()を呼ぶ。頂点インデックスビューとトポロジーを設定した後に描画する。
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら
 
 		//フリップ

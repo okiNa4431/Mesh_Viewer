@@ -3,6 +3,8 @@
 #include <d3d12.h>
 #include <string>
 #include <vector>
+#include <memory>
+#include "Dx12Wrapper.h"
 
 using namespace Microsoft::WRL;
 using namespace std;
@@ -28,10 +30,11 @@ private:
 	vector<unsigned int> _indices;
 
 	//Wrapperから持ってくるデバイス
-	Dx12Wrapper& _dx12;
+	shared_ptr<Dx12Wrapper> _dx12;
 
 public:
 	void LoadMesh(const string& filePath);
-	mesh(const string& filePath, Dx12Wrapper dx12);
+	mesh(const string& filePath, shared_ptr<Dx12Wrapper> dx12);
 	~mesh();
+	void Draw();
 };

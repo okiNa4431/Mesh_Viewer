@@ -13,3 +13,4 @@ project ("MyMeshViewer")
 
 # サブプロジェクトを含めます。
 add_subdirectory ("src")
+add_subdirectory ("hoge")

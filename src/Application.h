@@ -5,8 +5,11 @@
 #include<DirectXTex.h>
 #include<memory>
 #include "Dx12Wrapper.h"
+#include "renderer.h"
 
 class Dx12Wrapper;
+class renderer;
+class mesh;
 
 class Application
 {
@@ -17,6 +20,7 @@ private:
 	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);//ウィンドウ生成のための設定
 
 	std::shared_ptr<Dx12Wrapper> _dx12;
+	std::shared_ptr<renderer> _renderer;
 
 	//シングルトンなのでコンストラクタをここに置いておく
 	Application();

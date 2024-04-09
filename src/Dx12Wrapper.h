@@ -55,7 +55,7 @@ public:
 	void BeginDraw();
 	void EndDraw();
 
-	ComPtr< ID3D12Device> Device();//デバイス
+	ID3D12Device* Device();//デバイス
 	ComPtr < ID3D12GraphicsCommandList> CommandList();//コマンドリスト
 	ComPtr < IDXGISwapChain4> Swapchain();//スワップチェイン
 };

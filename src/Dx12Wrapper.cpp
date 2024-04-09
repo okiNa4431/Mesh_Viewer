@@ -255,7 +255,8 @@ HRESULT	Dx12Wrapper::CreateFinalRenderTargets()
 }
 
 void
-Dx12Wrapper::BeginDraw() {
+Dx12Wrapper::BeginDraw()
+{
 	//DirectX処理
 	//バックバッファのインデックスを取得
 	auto bbIdx = _swapchain->GetCurrentBackBufferIndex();
@@ -283,11 +284,13 @@ Dx12Wrapper::BeginDraw() {
 	_cmdList->RSSetScissorRects(1, _scissorrect.get());
 }
 
-void Dx12Wrapper::Update() {
+void Dx12Wrapper::Update()
+{
 
 }
 
-void Dx12Wrapper::EndDraw() {
+void Dx12Wrapper::EndDraw()
+{
 	auto bbIdx = _swapchain->GetCurrentBackBufferIndex();
 
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(_backBuffers[bbIdx], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -314,12 +317,15 @@ void Dx12Wrapper::EndDraw() {
 	_cmdList->Reset(_cmdAllocator.Get(), nullptr);//再びコマンドリストをためる準備
 }
 
-ComPtr<ID3D12Device> Dx12Wrapper::Device() {
-	return _dev;
+ID3D12Device* Dx12Wrapper::Device()
+{
+	return _dev.Get();
 }
-ComPtr<ID3D12GraphicsCommandList> Dx12Wrapper::CommandList() {
+ComPtr<ID3D12GraphicsCommandList> Dx12Wrapper::CommandList()
+{
 	return _cmdList;
 }
-ComPtr<IDXGISwapChain4> Dx12Wrapper::Swapchain() {
+ComPtr<IDXGISwapChain4> Dx12Wrapper::Swapchain()
+{
 	return _swapchain;
 }
