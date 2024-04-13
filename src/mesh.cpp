@@ -24,6 +24,7 @@ HRESULT mesh::CreateVertexBuffer()
 	D3D12_HEAP_PROPERTIES heapprop = {};
 	heapprop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_RESOURCE_DESC resdesc = {};
+	printf("vertices size: %d\n", (int)_vertices.size());
 	resdesc = CD3DX12_RESOURCE_DESC::Buffer(_vertices.size());
 	auto result = _dx12->Device()->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resdesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&_vBuffer));
 
@@ -63,7 +64,7 @@ HRESULT mesh::CreateIndexView()
 {
 	_ibView.BufferLocation = _iBuffer->GetGPUVirtualAddress();
 	_ibView.Format = DXGI_FORMAT_R32_UINT;
-	_ibView.SizeInBytes = _indices.size();
+	_ibView.SizeInBytes = _indices.size()*sizeof(_indices[0]);
 	return S_OK;
 }
 

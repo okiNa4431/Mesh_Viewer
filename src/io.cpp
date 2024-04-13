@@ -1,6 +1,5 @@
 #include "io.h"
-#include <iostream>
-#include <fstream>
+#include <cassert>
 
 string GetExtension(const string& filePath)
 {
@@ -8,28 +7,8 @@ string GetExtension(const string& filePath)
 	return filePath.substr(idx + 1, filePath.size() - idx - 1);
 }
 
-io& io::Instance()
-{
-	static io Instance;
-	return Instance;
-}
-
-void io::LoadMesh(const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)
-{
-	string ext = GetExtension(filePath);
-	auto it = _ext2readFunc.find(ext);
-	//拡張子から適切なメッシュ読み込み用関数を呼び出し
-	if (it != _ext2readFunc.end())
-	{
-		it->second(filePath, vertices, indices);
-	}
-	else
-	{
-		printf("Not Set Extension.\n");
-	}
-}
-
-bool io::Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)
+//以下、メッシュの読み込み関数
+bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)
 {
 	//ASCII形式のPLYファイル読みこみ
 	printf("Reading PLY File.\n");
@@ -47,6 +26,13 @@ bool io::Read_ply(const string& filePath, vector<unsigned char>& vertices, vecto
 	{
 		ifs >> headerStr;
 		if (headerStr == "comment") getline(ifs, headerStr);
+		else if (headerStr == "format")
+		{
+			string format;
+			ifs >> format;
+			if (format.find("ascii") != string::npos) IsASCII = true;
+			else IsASCII = false;
+		}
 		else if (headerStr == "element")
 		{
 			string elementInfo;
@@ -65,12 +51,10 @@ bool io::Read_ply(const string& filePath, vector<unsigned char>& vertices, vecto
 		{
 
 		}
-		if (headerStr == "ascii") IsASCII = true;
-		else IsASCII = false;
 	}
 	printf("vertex: %u\n", vertNum);
 	printf("face: %u\n", indiceNum);
-
+	if (IsASCII) printf("ASCII\n");
 	//頂点データ読み込み
 	if (IsASCII)
 	{
@@ -88,7 +72,7 @@ bool io::Read_ply(const string& filePath, vector<unsigned char>& vertices, vecto
 
 		for (int i = 0; i < indiceNum; i++)
 		{
-			unsigned int topo,x,y,z;
+			unsigned int topo, x, y, z;
 			ifs >> topo >> x >> y >> z;
 			indices.push_back(x);
 			indices.push_back(y);
@@ -99,15 +83,40 @@ bool io::Read_ply(const string& filePath, vector<unsigned char>& vertices, vecto
 	{
 
 	}
+	printf("vertex(vector): %d\n", (int)vertices.size());
+	printf("index(vector): %d\n", (int)indices.size());
 
 	return true;
+}
+
+
+io& io::Instance()
+{
+	static io Instance;
+	return Instance;
+}
+
+void io::LoadMesh(const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)
+{
+	string ext = GetExtension(filePath);
+	auto it = _ext2readFunc.find(ext);
+	//拡張子から適切なメッシュ読み込み用関数を呼び出し
+	if (it != _ext2readFunc.end())
+	{
+		printf("%s: Found Extension.\n", ext.c_str());
+		it->second(filePath, vertices, indices);
+	}
+	else
+	{
+		printf("%s: Not Set Extension.\n",filePath.c_str());
+	}
 }
 
 io::io()
 {
 	//ここに他のデータ形式を書き連ねていく
 	_ext2readFunc["ply"] = [](const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)->bool
-		{ return &io::Read_ply; };
+		{ return Read_ply(filePath, vertices, indices); };
 }
 io::~io()
 {

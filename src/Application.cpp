@@ -4,6 +4,15 @@
 const unsigned int window_width = 1280;
 const unsigned int window_height = 720;
 
+///デバッグレイヤーを有効にする
+void EnableDebugLayer() {
+	ID3D12Debug* debugLayer = nullptr;
+	auto result = D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
+	debugLayer->EnableDebugLayer();
+	debugLayer->Release();
+
+}
+
 //ウィンドウのコールバック関数
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -61,6 +70,11 @@ bool Application::Init()
 	CreateGameWindow(_hwnd, _windowClass);
 	printf("after window\n");
 
+#ifdef _DEBUG
+	//デバッグレイヤーをオンに
+	EnableDebugLayer();
+#endif
+
 	//Wrapper初期化
 	_dx12.reset(new Dx12Wrapper(_hwnd));
 	printf("after Wrapper\n");
@@ -91,6 +105,7 @@ void Application::Run()
 
 		_dx12->BeginDraw();//深度とレンダーターゲットとビューポート、シザー矩形
 		_renderer->SetPipelineAndSignature();//パイプラインとシグネチャのセット
+		//_renderer->setMatData();//座標変換用の行列をセット
 		_renderer->Draw();//rendererの保持するmeshのDraw()を呼ぶ。頂点インデックスビューとトポロジーを設定した後に描画する。
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら
 

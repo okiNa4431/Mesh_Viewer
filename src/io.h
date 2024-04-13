@@ -3,6 +3,8 @@
 #include <map>
 #include <vector>
 #include <functional>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 using readingFunc = function<bool(const string&,vector<unsigned char>&, vector<unsigned int>&)>;
@@ -16,8 +18,6 @@ private:
 	~io();
 	io(const io&) = delete;
 	void operator=(const io&) = delete;
-	//ˆÈ‰ºAƒƒbƒVƒ…‚Ì“Ç‚İ‚İŠÖ”
-	bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices);
 
 public:
 	static io& Instance();
