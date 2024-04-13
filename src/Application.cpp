@@ -68,7 +68,6 @@ bool Application::Init()
 {
 	//ウィンドウ関連
 	CreateGameWindow(_hwnd, _windowClass);
-	printf("after window\n");
 
 #ifdef _DEBUG
 	//デバッグレイヤーをオンに
@@ -77,14 +76,12 @@ bool Application::Init()
 
 	//Wrapper初期化
 	_dx12.reset(new Dx12Wrapper(_hwnd));
-	printf("after Wrapper\n");
 
 	//レンダラー初期化
 	_renderer.reset(new renderer(_dx12));
 
 	//メッシュ読み込み
 	_renderer->AddMesh("C:\\Users\\NaokiMurakami\\3D Objects\\walkman.ply");
-	printf("after addmesh\n");
 	return true;
 }
 

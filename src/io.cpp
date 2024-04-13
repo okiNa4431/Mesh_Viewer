@@ -1,6 +1,6 @@
 #include "io.h"
 #include <cassert>
-
+#include <array>
 string GetExtension(const string& filePath)
 {
 	int idx = filePath.rfind('.');
@@ -22,6 +22,7 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	unsigned int vertNum = 0;
 	unsigned int indiceNum = 0;
 	bool IsASCII = true;
+	bool haveNormal = false;
 	while (headerStr != "end_header" && !ifs.eof())
 	{
 		ifs >> headerStr;
@@ -49,19 +50,24 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 		//本当はpropertyに応じてレイアウトとかを決定したい
 		else if (headerStr == "property")
 		{
-
+			string format;
+			ifs >> format;
+			string property;
+			ifs >> property;
+			if (property == "nx") haveNormal = true;
 		}
 	}
-	printf("vertex: %u\n", vertNum);
-	printf("face: %u\n", indiceNum);
-	if (IsASCII) printf("ASCII\n");
+	printf("vertex: %u, face: %u\n", vertNum, indiceNum);
+
 	//頂点データ読み込み
+	vector<float> position(vertNum * 3);
 	if (IsASCII)
 	{
 		for (int i = 0; i < vertNum; i++)
 		{
 			float x, y, z;
 			ifs >> x >> y >> z;
+			position[i * 3] = x; position[i * 3 + 1] = y; position[i * 3 + 2] = z;
 			const unsigned char* xPtr = reinterpret_cast<const unsigned char*>(&x);
 			const unsigned char* yPtr = reinterpret_cast<const unsigned char*>(&y);
 			const unsigned char* zPtr = reinterpret_cast<const unsigned char*>(&z);
@@ -83,10 +89,17 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	{
 		//ifs.read(reinterpret_cast<char*>(vertices.data()), vertNum * 12);
 		//ifs.read(reinterpret_cast<char*>(indices.data()), indiceNum * sizeof(indices[0]));
-		printf("Finish binary\n");
 	}
-	printf("vertex(vector): %d\n", (int)vertices.size());
-	printf("index(vector): %d\n", (int)indices.size());
+
+	//法線を持っていない場合はここで法線を計算
+	if (!haveNormal)
+	{
+		for (int i = 0; i < indiceNum; i++)
+		{
+
+		}
+	}
+
 	ifs.close();
 	return true;
 }

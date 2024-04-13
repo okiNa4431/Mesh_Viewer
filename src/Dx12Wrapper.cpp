@@ -231,7 +231,7 @@ HRESULT	Dx12Wrapper::CreateFinalRenderTargets()
 	heapDesc.NumDescriptors = 2;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	result = _dev->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(_rtvHeaps.ReleaseAndGetAddressOf()));
-	if (result == S_OK) printf("Created Descriptor Heap.\n");
+	assert(SUCCEEDED(result));
 
 	_backBuffers.resize(swcDesc.BufferCount);
 
