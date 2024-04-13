@@ -81,11 +81,13 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	}
 	else
 	{
-
+		//ifs.read(reinterpret_cast<char*>(vertices.data()), vertNum * 12);
+		//ifs.read(reinterpret_cast<char*>(indices.data()), indiceNum * sizeof(indices[0]));
+		printf("Finish binary\n");
 	}
 	printf("vertex(vector): %d\n", (int)vertices.size());
 	printf("index(vector): %d\n", (int)indices.size());
-
+	ifs.close();
 	return true;
 }
 

@@ -181,42 +181,45 @@ HRESULT renderer::CreateDescHeap()
 HRESULT renderer::setSceneMatrix()
 {
 	//行列の生成(初期値)
-	auto angle = 0;
-	auto worMat = XMMatrixRotationY(angle);
-	XMFLOAT3 eye(0, 50, -75);
+	auto worMat = XMMatrixRotationY(_angle);
+	XMFLOAT3 eye(10, 10, 10);
 	XMFLOAT3 target(0, 0, 0);
 	XMFLOAT3 up(0, 1, 0);
 		//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
 	auto& app = Application::Instance();
 	SIZE window = app.GetWindowSize();
 	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 100.0f);
+	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 500.0f);
 
 	//定数バッファの設定
-	ID3D12Resource* matBuff = nullptr;
 	D3D12_HEAP_PROPERTIES heapprop = {};
 	heapprop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_RESOURCE_DESC resdesc = {};
-	resdesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(SceneMat) + 0xff) & ~0xff);
-	auto result = _dx12->Device()->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resdesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&matBuff));
-	
+	auto buffSize = (sizeof(SceneMat) + 0xff) & ~0xff;
+	resdesc = CD3DX12_RESOURCE_DESC::Buffer(buffSize);
+	auto result = _dx12->Device()->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resdesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(_transformMatBuff.ReleaseAndGetAddressOf()));
+	if (FAILED(result))
+	{
+		assert(SUCCEEDED(result));
+		return result;
+	}
+
 	//実際の値をmap
 	SceneMat* mapSceneMat = nullptr;
-	result = matBuff->Map(0, nullptr, (void**)&mapSceneMat);
+	result = _transformMatBuff->Map(0, nullptr, (void**)&mapSceneMat);
 	mapSceneMat->world = worMat;
 	mapSceneMat->view = viewMat;
 	mapSceneMat->proj = projMat;
-	matBuff->Unmap(0, nullptr);
+	_transformMatBuff->Unmap(0, nullptr);
 
 	//ビューを生成
 	D3D12_CONSTANT_BUFFER_VIEW_DESC matBuffViewDesc = {};
-	matBuffViewDesc.BufferLocation = matBuff->GetGPUVirtualAddress();
-	matBuffViewDesc.SizeInBytes = matBuff->GetDesc().Width;
+	matBuffViewDesc.BufferLocation = _transformMatBuff->GetGPUVirtualAddress();
+	matBuffViewDesc.SizeInBytes = buffSize;
 
 	//ヒープに乗せる
-	auto heapHandle = _descHeap->GetCPUDescriptorHandleForHeapStart();
-	_dx12->Device()->CreateConstantBufferView(&matBuffViewDesc, heapHandle);
-
+	_dx12->Device()->CreateConstantBufferView(&matBuffViewDesc, _descHeap->GetCPUDescriptorHandleForHeapStart());
+	
 	return result;
 }
 
@@ -224,8 +227,8 @@ renderer::renderer(std::shared_ptr<Dx12Wrapper> dx12) : _dx12(dx12)
 {
 	assert(SUCCEEDED(CreateSignature()));
 	assert(SUCCEEDED(CreatePipeline()));
-	//assert(SUCCEEDED(CreateDescHeap()));
-	//assert(SUCCEEDED(setSceneMatrix()));
+	assert(SUCCEEDED(CreateDescHeap()));
+	assert(SUCCEEDED(setSceneMatrix()));
 }
 
 renderer::~renderer()
@@ -249,7 +252,23 @@ void renderer::Draw()
 
 void renderer::Update()
 {
+	_angle += 0.05;
+	auto worMat = XMMatrixRotationY(_angle);
+	XMFLOAT3 eye(0, 0, 400);
+	XMFLOAT3 target(0, 0, 0);
+	XMFLOAT3 up(0, 1, 0);
+	//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
+	auto& app = Application::Instance();
+	SIZE window = app.GetWindowSize();
+	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 500.0f);
 
+	SceneMat* mapSceneMat = nullptr;
+	auto result = _transformMatBuff->Map(0, nullptr, (void**)&mapSceneMat);
+	mapSceneMat->world = worMat;
+	mapSceneMat->view = viewMat;
+	mapSceneMat->proj = projMat;
+	_transformMatBuff->Unmap(0, nullptr);
 }
 
 void renderer::setMatData()
@@ -261,14 +280,10 @@ void renderer::setMatData()
 
 void renderer::AddMesh(shared_ptr<mesh> mesh)
 {
-	printf("In Addmesh2\n");
 	_meshes.emplace_back(mesh);
 }
 
 void renderer::AddMesh(const std::string& filePath)
 {
-	printf("In Addmesh\n");
-	int users = _dx12.use_count();
-	printf("user: %d\n", users);
 	AddMesh(make_shared<mesh>(filePath, _dx12));
 }

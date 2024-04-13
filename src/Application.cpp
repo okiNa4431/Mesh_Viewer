@@ -105,8 +105,9 @@ void Application::Run()
 
 		_dx12->BeginDraw();//深度とレンダーターゲットとビューポート、シザー矩形
 		_renderer->SetPipelineAndSignature();//パイプラインとシグネチャのセット
-		//_renderer->setMatData();//座標変換用の行列をセット
+		_renderer->setMatData();//座標変換用の行列をセット
 		_renderer->Draw();//rendererの保持するmeshのDraw()を呼ぶ。頂点インデックスビューとトポロジーを設定した後に描画する。
+		_renderer->Update();//座標変換の値更新等
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら
 
 		//フリップ

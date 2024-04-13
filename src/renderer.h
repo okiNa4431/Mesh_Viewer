@@ -25,7 +25,7 @@ private:
 
 	//ディスクリプタヒープ
 	HRESULT CreateDescHeap();
-	ComPtr<ID3D12DescriptorHeap> _descHeap;
+	ID3D12DescriptorHeap* _descHeap = nullptr;
 
 	//ビュープロジェクションやらワールド座標への変換
 	struct SceneMat
@@ -35,6 +35,9 @@ private:
 		XMMATRIX proj;
 	};
 	HRESULT setSceneMatrix();//行列の設定
+	ComPtr<ID3D12Resource> _transformMatBuff = nullptr;
+		//保持しておくパラメータ
+	float _angle = 0.0;
 
 	//保持するメッシュ
 	std::vector<std::shared_ptr<mesh>> _meshes;

@@ -25,7 +25,7 @@ HRESULT mesh::CreateVertexBuffer()
 	heapprop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_RESOURCE_DESC resdesc = {};
 	printf("vertices size: %d\n", (int)_vertices.size());
-	resdesc = CD3DX12_RESOURCE_DESC::Buffer(_vertices.size());
+	resdesc = CD3DX12_RESOURCE_DESC::Buffer(_vertices.size()*sizeof(_vertices[0]));
 	auto result = _dx12->Device()->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resdesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&_vBuffer));
 
 	//データをマップ
@@ -46,7 +46,7 @@ HRESULT mesh::CreateIndexBuffer()
 	auto result = _dx12->Device()->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resdesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&_iBuffer));
 	
 	//データをマップ
-	unsigned char* indxMap = nullptr;
+	unsigned int* indxMap = nullptr;
 	result = _iBuffer->Map(0, nullptr, (void**)&indxMap);
 	std::copy(begin(_indices), end(_indices), indxMap);
 	_iBuffer->Unmap(0, nullptr);
@@ -72,6 +72,28 @@ void mesh::LoadMesh(const string& filePath)
 {
 	auto& IO = io::Instance();
 	IO.LoadMesh(filePath, _vertices, _indices);
+	/*float x=-1.0, y=-1.0, z=0.1;
+	const unsigned char* xPtr = reinterpret_cast<const unsigned char*>(&x);
+	const unsigned char* yPtr = reinterpret_cast<const unsigned char*>(&y);
+	const unsigned char* zPtr = reinterpret_cast<const unsigned char*>(&z);
+	_vertices.insert(_vertices.end(), xPtr, xPtr + sizeof(float));
+	_vertices.insert(_vertices.end(), yPtr, yPtr + sizeof(float));
+	_vertices.insert(_vertices.end(), zPtr, zPtr + sizeof(float));
+	x = -1.0, y = 1.0, z = 0.1;
+	xPtr = reinterpret_cast<const unsigned char*>(&x);
+	yPtr = reinterpret_cast<const unsigned char*>(&y);
+	zPtr = reinterpret_cast<const unsigned char*>(&z);
+	_vertices.insert(_vertices.end(), xPtr, xPtr + sizeof(float));
+	_vertices.insert(_vertices.end(), yPtr, yPtr + sizeof(float));
+	_vertices.insert(_vertices.end(), zPtr, zPtr + sizeof(float));
+	x = 1.0, y = -1.0, z = 0.1;
+	xPtr = reinterpret_cast<const unsigned char*>(&x);
+	yPtr = reinterpret_cast<const unsigned char*>(&y);
+	zPtr = reinterpret_cast<const unsigned char*>(&z);
+	_vertices.insert(_vertices.end(), xPtr, xPtr + sizeof(float));
+	_vertices.insert(_vertices.end(), yPtr, yPtr + sizeof(float));
+	_vertices.insert(_vertices.end(), zPtr, zPtr + sizeof(float));
+	_indices.push_back(0); _indices.push_back(1); _indices.push_back(2);*/
 }
 
 void mesh::Draw()
