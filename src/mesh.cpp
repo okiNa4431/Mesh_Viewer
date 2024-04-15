@@ -55,7 +55,7 @@ HRESULT mesh::CreateVertexView()
 {
 	_vbView.BufferLocation = _vBuffer->GetGPUVirtualAddress();
 	_vbView.SizeInBytes = _vertices.size();
-	_vbView.StrideInBytes = 12;//float3‚Â>4*3
+	_vbView.StrideInBytes = 24;//float3‚Â>4*3*2(À•W‚Æ–@ü)
 	return S_OK;
 }
 HRESULT mesh::CreateIndexView()

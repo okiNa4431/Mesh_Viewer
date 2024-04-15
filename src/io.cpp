@@ -1,6 +1,10 @@
 #include "io.h"
 #include <cassert>
 #include <array>
+#include <DirectXMath.h>
+
+using namespace DirectX;
+
 string GetExtension(const string& filePath)
 {
 	int idx = filePath.rfind('.');
@@ -60,20 +64,14 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	printf("vertex: %u, face: %u\n", vertNum, indiceNum);
 
 	//頂点データ読み込み
-	vector<float> position(vertNum * 3);
+	vector<XMVECTOR> position(vertNum);
 	if (IsASCII)
 	{
 		for (int i = 0; i < vertNum; i++)
 		{
 			float x, y, z;
 			ifs >> x >> y >> z;
-			position[i * 3] = x; position[i * 3 + 1] = y; position[i * 3 + 2] = z;
-			const unsigned char* xPtr = reinterpret_cast<const unsigned char*>(&x);
-			const unsigned char* yPtr = reinterpret_cast<const unsigned char*>(&y);
-			const unsigned char* zPtr = reinterpret_cast<const unsigned char*>(&z);
-			vertices.insert(vertices.end(), xPtr, xPtr + sizeof(float));
-			vertices.insert(vertices.end(), yPtr, yPtr + sizeof(float));
-			vertices.insert(vertices.end(), zPtr, zPtr + sizeof(float));
+			position[i] = XMVectorSet(x, y, z, 0.0f);
 		}
 
 		for (int i = 0; i < indiceNum; i++)
@@ -92,12 +90,52 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	}
 
 	//法線を持っていない場合はここで法線を計算
+	vector<vector<XMVECTOR>> vertNormals(vertNum,vector<XMVECTOR>(0));
 	if (!haveNormal)
 	{
 		for (int i = 0; i < indiceNum; i++)
 		{
-
+			const unsigned int a = indices[i * 3];
+			const unsigned int b = indices[i * 3+1];
+			const unsigned int c = indices[i * 3+2];
+			const XMVECTOR abVec = XMVectorSubtract(position[b], position[a]);
+			const XMVECTOR acVec = XMVectorSubtract(position[c], position[a]);
+			const XMVECTOR normal = XMVector3Normalize(XMVector3Cross(abVec, acVec));
+			vertNormals[a].push_back(normal);
+			vertNormals[b].push_back(normal);
+			vertNormals[c].push_back(normal);
 		}
+	}
+
+	//ここでverticeにデータを格納
+	for (int i = 0; i < vertNum; i++)
+	{
+		//座標情報
+		for (int j = 0; j < 3; j++)
+		{
+			const float posJ = XMVectorGetByIndex(position[i], j);
+			const unsigned char* posJPtr = reinterpret_cast<const unsigned char*>(&posJ);
+			vertices.insert(vertices.end(), posJPtr, posJPtr + sizeof(float));
+		}
+
+		//法線情報
+		if (!haveNormal)
+		{
+			XMVECTOR normal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+			for (int j = 0; j < (int)vertNormals[i].size(); j++)
+			{
+				normal = XMVectorAdd(normal, vertNormals[i][j]);
+			}
+			normal = XMVector3Normalize(normal);
+
+			for (int j = 0; j < 3; j++)
+			{
+				const float norJ = XMVectorGetByIndex(normal, j);
+				const unsigned char* norJPtr = reinterpret_cast<const unsigned char*>(&norJ);
+				vertices.insert(vertices.end(), norJPtr, norJPtr + sizeof(float));
+			}
+		}
+		
 	}
 
 	ifs.close();
