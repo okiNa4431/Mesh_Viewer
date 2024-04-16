@@ -38,6 +38,13 @@ private:
 	ComPtr<ID3D12Resource> _transformMatBuff = nullptr;
 		//保持しておくパラメータ
 	float _angle = 0.0;
+	XMFLOAT3 _eye = XMFLOAT3(0, 0, 400);
+	XMFLOAT3 _target = XMFLOAT3(0, 0, 0);
+	XMFLOAT3 _up = XMFLOAT3(0, 1, 0);
+		//入力値
+	int _wheel = 0;
+	float _mouseMoveX = 0;
+	float _mouseMoveY = 0;
 
 	//保持するメッシュ
 	std::vector<std::shared_ptr<mesh>> _meshes;
@@ -48,6 +55,7 @@ public:
 	void Draw();
 	void Update();
 	void setMatData();
+	void setInputData(int& wheel, int& x, int& y);
 	void AddMesh(const std::string& filePath);
 	void AddMesh(shared_ptr<mesh> mesh);
 };

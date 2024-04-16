@@ -1,4 +1,5 @@
 #include "Application.h"
+#include <windowsx.h>
 
 //ウィンドウサイズ
 const unsigned int window_width = 1280;
@@ -16,11 +17,61 @@ void EnableDebugLayer() {
 //ウィンドウのコールバック関数
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	if (msg == WM_DESTROY)
+	//rendererに送る入力値
+	int wheel = 0;
+	int x = 0;
+	int y = 0;
+	switch (msg)
 	{
-		PostQuitMessage(0);
-		return 0;
+		case WM_INPUT:
+		{
+			UINT size = 0;
+			GetRawInputData((HRAWINPUT)lparam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER));
+			BYTE* buffer = new BYTE[size];
+			if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) != -1) {
+				RAWINPUT* rawInput = (RAWINPUT*)buffer;
+				if (rawInput->header.dwType == RIM_TYPEMOUSE) {
+					int dx = rawInput->data.mouse.lLastX;
+					int dy = rawInput->data.mouse.lLastY;
+
+					if (rawInput->data.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN) {
+						printf("Left mouse button down\n");
+					}
+
+					if (rawInput->data.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN) {
+						printf("Right mouse button down\n");
+					}
+					
+					wheel = rawInput->data.mouse.usButtonData;
+					if (wheel != 0) {
+						printf("Wheel delta: %d\n", wheel);
+					}
+				}
+			}
+			delete[] buffer;
+			break;
+		}
+		case WM_MOUSEMOVE:
+		{
+			if (wparam & MK_MBUTTON)
+			{
+				x = GET_X_LPARAM(lparam);
+				y = GET_Y_LPARAM(lparam);
+			}
+			break;
+		}
+		case WM_DESTROY:
+		{
+			PostQuitMessage(0);
+			return 0;
+		}
+		default:
+			break;
 	}
+
+	auto& app = Application::Instance();
+	if(app._renderer != nullptr) app._renderer->setInputData(wheel, x, y);
+
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
@@ -50,6 +101,16 @@ void Application::CreateGameWindow(HWND& hwnd, WNDCLASSEX& w)
 	);
 }
 
+//マウスの取得
+void Application::GetMouseDevice(RAWINPUTDEVICE& mouse)
+{
+	mouse.usUsagePage = 0x01;
+	mouse.usUsage = 0x02;
+	mouse.dwFlags = 0;
+	mouse.hwndTarget = 0;
+	RegisterRawInputDevices(&mouse, 1, sizeof mouse);
+}
+
 SIZE Application::GetWindowSize()const
 {
 	SIZE ret;
@@ -68,6 +129,9 @@ bool Application::Init()
 {
 	//ウィンドウ関連
 	CreateGameWindow(_hwnd, _windowClass);
+
+	//入力デバイス取得
+	GetMouseDevice(_mouse);
 
 #ifdef _DEBUG
 	//デバッグレイヤーをオンに

@@ -2,7 +2,6 @@
 #include<Windows.h>
 #include<dxgi1_6.h>
 #include<DirectXMath.h>
-#include<DirectXTex.h>
 #include<memory>
 #include "Dx12Wrapper.h"
 #include "renderer.h"
@@ -20,8 +19,11 @@ private:
 	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);//ウィンドウ生成のための設定
 
 	std::shared_ptr<Dx12Wrapper> _dx12;
-	std::shared_ptr<renderer> _renderer;
 
+	//入力デバイス(マウス)
+	RAWINPUTDEVICE _mouse;
+	void GetMouseDevice(RAWINPUTDEVICE& mouse);
+	
 	//シングルトンなのでコンストラクタをここに置いておく
 	Application();
 	Application(const Application&) = delete;
@@ -30,6 +32,9 @@ private:
 public:
 	//シングルトンインスタンスを返す
 	static Application& Instance();
+
+	//入力値を送るために仕方なくpublicに設定中
+	std::shared_ptr<renderer> _renderer;
 
 	bool Init();
 	void Run();

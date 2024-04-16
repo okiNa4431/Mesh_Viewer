@@ -187,13 +187,10 @@ HRESULT renderer::setSceneMatrix()
 {
 	//行列の生成(初期値)
 	auto worMat = XMMatrixRotationY(_angle);
-	XMFLOAT3 eye(10, 10, 10);
-	XMFLOAT3 target(0, 0, 0);
-	XMFLOAT3 up(0, 1, 0);
 		//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
 	auto& app = Application::Instance();
 	SIZE window = app.GetWindowSize();
-	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&_eye), XMLoadFloat3(&_target), XMLoadFloat3(&_up));
 	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 500.0f);
 
 	//定数バッファの設定
@@ -257,16 +254,22 @@ void renderer::Draw()
 
 void renderer::Update()
 {
-	_angle += 0.05;
-	auto worMat = XMMatrixRotationY(_angle);
-	XMFLOAT3 eye(0, 0, 400);
-	XMFLOAT3 target(0, 0, 0);
-	XMFLOAT3 up(0, 1, 0);
+	//入力値によって座標変換
+		//ホイールの入力値によって拡大縮小
+	XMVECTOR t2eVecN = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&_eye), XMLoadFloat3(&_target)));
+	XMFLOAT3 scalingFloat3;
+	if ((1 << 16) / 2 < _wheel) _wheel = _wheel - (1 << 16);//拡大時は入力値が1<<16から引いた値になるので負の値になるよう修正
+	XMStoreFloat3(&scalingFloat3, (float)_wheel/10.0 * t2eVecN);
+	_eye.x += scalingFloat3.x; _eye.y += scalingFloat3.y; _eye.z += scalingFloat3.z;
+		//マウス中ボタンで平行移動
+
+	
 	//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
 	auto& app = Application::Instance();
 	SIZE window = app.GetWindowSize();
-	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 500.0f);
+	auto worMat = XMMatrixRotationY(_angle);
+	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&_eye), XMLoadFloat3(&_target), XMLoadFloat3(&_up));
+	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 1000.0f);
 
 	SceneMat* mapSceneMat = nullptr;
 	auto result = _transformMatBuff->Map(0, nullptr, (void**)&mapSceneMat);
@@ -281,6 +284,13 @@ void renderer::setMatData()
 	auto cmdList = _dx12->CommandList();
 	cmdList->SetDescriptorHeaps(1, &_descHeap);
 	cmdList->SetGraphicsRootDescriptorTable(0, _descHeap->GetGPUDescriptorHandleForHeapStart());
+}
+
+void renderer::setInputData(int& wheel, int& x, int& y)
+{
+	_wheel = wheel;
+	_mouseMoveX = x;
+	_mouseMoveY = y;
 }
 
 void renderer::AddMesh(shared_ptr<mesh> mesh)
