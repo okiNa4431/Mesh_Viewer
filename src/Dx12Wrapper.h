@@ -55,7 +55,13 @@ public:
 	void BeginDraw();
 	void EndDraw();
 
+	void WaitForCommandQueue();
+
 	ID3D12Device* Device();//デバイス
 	ComPtr < ID3D12GraphicsCommandList> CommandList();//コマンドリスト
 	ComPtr < IDXGISwapChain4> Swapchain();//スワップチェイン
+	ComPtr<ID3D12CommandQueue> CmdQue();//コマンドキュー
+	//ビューポートを返す
+	D3D12_VIEWPORT GetViewPort()const;
+	ComPtr<ID3D12DescriptorHeap> CreateDesHeapForSpriteFont();
 };

@@ -142,7 +142,6 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	return true;
 }
 
-
 io& io::Instance()
 {
 	static io Instance;

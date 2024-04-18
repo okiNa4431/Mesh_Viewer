@@ -317,6 +317,49 @@ void Dx12Wrapper::EndDraw()
 	_cmdList->Reset(_cmdAllocator.Get(), nullptr);//再びコマンドリストをためる準備
 }
 
+ComPtr<ID3D12DescriptorHeap> Dx12Wrapper::CreateDesHeapForSpriteFont()
+{
+	ComPtr<ID3D12DescriptorHeap> ret;
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	desc.NodeMask = 0;
+	desc.NumDescriptors = 1;
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	_dev->CreateDescriptorHeap(&desc, IID_PPV_ARGS(ret.ReleaseAndGetAddressOf()));
+	return ret;
+}
+
+D3D12_VIEWPORT Dx12Wrapper::GetViewPort()const {
+	auto wsize = Application::Instance().GetWindowSize();
+	D3D12_VIEWPORT vp;
+	vp.TopLeftX = vp.TopLeftY = 0;
+	vp.Width = wsize.cx;
+	vp.Height = wsize.cy;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	return vp;
+}
+
+void Dx12Wrapper::WaitForCommandQueue()
+{
+	//仮に初回として_fenceValueが0だったとします
+	_cmdQueue->Signal(_fence.Get(), ++_fenceVal);
+	//↑の命令直後では_fenceValueは1で、
+	//GetCompletedValueはまだ0です。
+	if (_fence->GetCompletedValue() < _fenceVal) {
+		//もしまだ終わってないなら、イベント待ちを行う
+		//↓そのためのイベント？あとそのための_fenceValue
+		auto event = CreateEvent(nullptr, false, false, nullptr);
+		//フェンスに対して、CompletedValueが_fenceValueに
+		//なったら指定のイベントを発生させるという命令↓
+		_fence->SetEventOnCompletion(_fenceVal, event);
+		//↑まだイベント発生しない
+		//↓イベントが発生するまで待つ
+		WaitForSingleObject(event, INFINITE);
+		CloseHandle(event);
+	}
+}
+
 ID3D12Device* Dx12Wrapper::Device()
 {
 	return _dev.Get();
@@ -324,6 +367,9 @@ ID3D12Device* Dx12Wrapper::Device()
 ComPtr<ID3D12GraphicsCommandList> Dx12Wrapper::CommandList()
 {
 	return _cmdList;
+}
+ComPtr<ID3D12CommandQueue> Dx12Wrapper::CmdQue() {
+	return _cmdQueue.Get();
 }
 ComPtr<IDXGISwapChain4> Dx12Wrapper::Swapchain()
 {

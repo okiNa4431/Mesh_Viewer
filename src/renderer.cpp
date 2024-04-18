@@ -261,13 +261,23 @@ void renderer::Update()
 	if ((1 << 16) / 2 < _wheel) _wheel = _wheel - (1 << 16);//拡大時は入力値が1<<16から引いた値になるので負の値になるよう修正
 	XMStoreFloat3(&scalingFloat3, (float)_wheel/10.0 * t2eVecN);
 	_eye.x += scalingFloat3.x; _eye.y += scalingFloat3.y; _eye.z += scalingFloat3.z;
-		//マウス中ボタンで平行移動
+		//マウス中ボタン押しながらで平行移動
+	XMFLOAT3 moveFloat = XMFLOAT3(0,0,0);
+	if (_deltaX != 0 || _deltaY != 0)
+	{
+		XMVECTOR planeXVec = XMVector3Cross(-t2eVecN, XMLoadFloat3(&_up));
+		XMVECTOR planeYVec = XMVector3Cross(-t2eVecN, planeXVec);
+		XMVECTOR moveVec = planeXVec * _deltaX + planeYVec * _deltaY;
+		XMStoreFloat3(&moveFloat, moveVec);
+	}
+	_angle += 0.05f;
+		//入力値のリセット
+	_wheel = 0;
 
-	
 	//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
 	auto& app = Application::Instance();
 	SIZE window = app.GetWindowSize();
-	auto worMat = XMMatrixRotationY(_angle);
+	auto worMat = XMMatrixRotationY(_angle);// *XMMatrixTranslation(_deltaX, _deltaY, 0);
 	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&_eye), XMLoadFloat3(&_target), XMLoadFloat3(&_up));
 	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 1000.0f);
 
@@ -286,11 +296,11 @@ void renderer::setMatData()
 	cmdList->SetGraphicsRootDescriptorTable(0, _descHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
-void renderer::setInputData(int& wheel, int& x, int& y)
+void renderer::setInputData(int& wheel, int& dx, int& dy)
 {
 	_wheel = wheel;
-	_mouseMoveX = x;
-	_mouseMoveY = y;
+	_deltaX += dx;
+	_deltaY += -dy;
 }
 
 void renderer::AddMesh(shared_ptr<mesh> mesh)

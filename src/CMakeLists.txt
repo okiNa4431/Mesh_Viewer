@@ -14,4 +14,9 @@ target_include_directories(${BUILD_TARGET} PUBLIC /Libraries/DirectXTex-main/Dir
 target_link_directories(${BUILD_TARGET} PUBLIC /Libraries/DirectXTex-main/DirectXTex/Bin/Desktop_2022_Win10/x64/Debug)
 target_link_libraries(${BUILD_TARGET} DirectXTex)
 
+#DirectXTK12のインクルードのための設定
+target_include_directories(${BUILD_TARGET} PUBLIC /Libraries/DirectXTK12/Inc)
+target_link_directories(${BUILD_TARGET} PUBLIC /Libraries/DirectXTK12/Bin/Desktop_2022_Win10/x64/Debug)
+target_link_libraries(${BUILD_TARGET} DirectXTK12)
+
 add_subdirectory ("Shader")

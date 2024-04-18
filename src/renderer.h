@@ -43,8 +43,8 @@ private:
 	XMFLOAT3 _up = XMFLOAT3(0, 1, 0);
 		//“ü—Í’l
 	int _wheel = 0;
-	float _mouseMoveX = 0;
-	float _mouseMoveY = 0;
+	float _deltaX = 0;
+	float _deltaY = 0;
 
 	//•Û‚·‚éƒƒbƒVƒ…
 	std::vector<std::shared_ptr<mesh>> _meshes;
@@ -55,7 +55,7 @@ public:
 	void Draw();
 	void Update();
 	void setMatData();
-	void setInputData(int& wheel, int& x, int& y);
+	void setInputData(int& wheel, int& dx, int& dy);
 	void AddMesh(const std::string& filePath);
 	void AddMesh(shared_ptr<mesh> mesh);
 };

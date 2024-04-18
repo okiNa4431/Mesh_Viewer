@@ -5,6 +5,8 @@
 #include<memory>
 #include "Dx12Wrapper.h"
 #include "renderer.h"
+#include<SpriteFont.h>//文字列を表示するのに必要なもの
+#include<ResourceUploadBatch.h>//DXTK系列のリソースを使用するのに必要なもの
 
 class Dx12Wrapper;
 class renderer;
@@ -23,6 +25,11 @@ private:
 	//入力デバイス(マウス)
 	RAWINPUTDEVICE _mouse;
 	void GetMouseDevice(RAWINPUTDEVICE& mouse);
+
+	//ウィンドウ上の文字関連
+	DirectX::GraphicsMemory* _geometry = nullptr;
+	DirectX::SpriteFont* _spriteFont = nullptr;
+	DirectX::SpriteBatch* _spriteBatch = nullptr;
 	
 	//シングルトンなのでコンストラクタをここに置いておく
 	Application();

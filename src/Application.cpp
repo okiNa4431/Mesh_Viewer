@@ -1,9 +1,15 @@
 #include "Application.h"
 #include <windowsx.h>
+#include <filesystem>
+#include <iostream>
+#include <regex>
 
+#pragma comment(lib, "DirectXTK12.lib")
+#pragma comment(lib, "dxguid.lib")
 //ウィンドウサイズ
 const unsigned int window_width = 1280;
 const unsigned int window_height = 720;
+ComPtr<ID3D12DescriptorHeap> _heapForSpriteFont;
 
 ///デバッグレイヤーを有効にする
 void EnableDebugLayer() {
@@ -19,8 +25,8 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	//rendererに送る入力値
 	int wheel = 0;
-	int x = 0;
-	int y = 0;
+	int dx = 0;
+	int dy = 0;
 	switch (msg)
 	{
 		case WM_INPUT:
@@ -31,35 +37,20 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) != -1) {
 				RAWINPUT* rawInput = (RAWINPUT*)buffer;
 				if (rawInput->header.dwType == RIM_TYPEMOUSE) {
-					int dx = rawInput->data.mouse.lLastX;
-					int dy = rawInput->data.mouse.lLastY;
-
-					if (rawInput->data.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN) {
-						printf("Left mouse button down\n");
-					}
-
-					if (rawInput->data.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN) {
-						printf("Right mouse button down\n");
-					}
-					
+					dx = rawInput->data.mouse.lLastX;
+					dy = rawInput->data.mouse.lLastY;
 					wheel = rawInput->data.mouse.usButtonData;
-					if (wheel != 0) {
-						printf("Wheel delta: %d\n", wheel);
-					}
 				}
 			}
 			delete[] buffer;
 			break;
 		}
-		case WM_MOUSEMOVE:
+		/*case WM_MOUSEMOVE:
 		{
-			if (wparam & MK_MBUTTON)
-			{
 				x = GET_X_LPARAM(lparam);
 				y = GET_Y_LPARAM(lparam);
-			}
 			break;
-		}
+		}*/
 		case WM_DESTROY:
 		{
 			PostQuitMessage(0);
@@ -70,7 +61,7 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 
 	auto& app = Application::Instance();
-	if(app._renderer != nullptr) app._renderer->setInputData(wheel, x, y);
+	if(app._renderer != nullptr) app._renderer->setInputData(wheel, dx, dy);
 
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
@@ -146,6 +137,26 @@ bool Application::Init()
 
 	//メッシュ読み込み
 	_renderer->AddMesh("C:\\Users\\NaokiMurakami\\3D Objects\\walkman.ply");
+
+	//GraphicsMemory初期化
+	_geometry = new DirectX::GraphicsMemory(_dx12->Device());
+
+	//SpriteBatch初期化
+	DirectX::ResourceUploadBatch resUploadBatch(_dx12->Device());
+	resUploadBatch.Begin();
+	DirectX::RenderTargetState rtState(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+	DirectX::SpriteBatchPipelineStateDescription pd(rtState);
+	_spriteBatch = new DirectX::SpriteBatch(_dx12->Device(), resUploadBatch, pd);
+
+	//SpriteFont初期化
+	_heapForSpriteFont = _dx12->CreateDesHeapForSpriteFont();
+	_spriteFont = new DirectX::SpriteFont(_dx12->Device(), resUploadBatch, L"C:\\Users\\NaokiMurakami\\source\\repos\\MyMeshViewer\\font\\fonttest.spritefont", _heapForSpriteFont->GetCPUDescriptorHandleForHeapStart(), _heapForSpriteFont->GetGPUDescriptorHandleForHeapStart());
+	
+	auto future = resUploadBatch.End(_dx12->CmdQue().Get());
+	_dx12->WaitForCommandQueue();
+	future.wait();
+	_spriteBatch->SetViewport(_dx12->GetViewPort());
+
 	return true;
 }
 
@@ -169,10 +180,19 @@ void Application::Run()
 		_renderer->setMatData();//座標変換用の行列をセット
 		_renderer->Draw();//rendererの保持するmeshのDraw()を呼ぶ。頂点インデックスビューとトポロジーを設定した後に描画する。
 		_renderer->Update();//座標変換の値更新等
+
+		//文字周り(debug)
+		_dx12->CommandList()->SetDescriptorHeaps(1, _heapForSpriteFont.GetAddressOf());
+		_spriteBatch->Begin(_dx12->CommandList().Get());
+		_spriteFont->DrawString(_spriteBatch, L"FPS: ", DirectX::XMFLOAT2(0, 0), DirectX::Colors::Black, 0.0f, XMFLOAT2(0,0), 0.5f);
+		_spriteBatch->End();
+
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら
 
 		//フリップ
 		_dx12->Swapchain()->Present(1, 0);
+
+		_geometry->Commit(_dx12->CmdQue().Get());
 	}
 }
 
