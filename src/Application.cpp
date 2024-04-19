@@ -33,8 +33,6 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	//rendererに送る入力値
 	int wheel = 0;
-	int dx = 0;
-	int dy = 0;
 	switch (msg)
 	{
 		case WM_INPUT:
@@ -45,8 +43,6 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) != -1) {
 				RAWINPUT* rawInput = (RAWINPUT*)buffer;
 				if (rawInput->header.dwType == RIM_TYPEMOUSE) {
-					dx = rawInput->data.mouse.lLastX;
-					dy = rawInput->data.mouse.lLastY;
 					wheel = rawInput->data.mouse.usButtonData;
 				}
 			}
@@ -69,7 +65,7 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 
 	auto& app = Application::Instance();
-	if(app._renderer != nullptr) app._renderer->setInputData(wheel, dx, dy);
+	if(app._renderer != nullptr) app._renderer->setInputData(wheel);
 
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
@@ -213,7 +209,7 @@ void Application::Run()
 		_spriteBatch->Begin(_dx12->CommandList().Get());
 		int fps = getFPS();
 		_spriteFont->DrawString(_spriteBatch, ((wstring)L"FPS: " + std::to_wstring(fps)).c_str(), DirectX::XMFLOAT2(0, 0), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
-		_spriteFont->DrawString(_spriteBatch, ((wstring)L"FPS: " + std::to_wstring(fps)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
+		_spriteFont->DrawString(_spriteBatch, ((wstring)L"Position: " + std::to_wstring(_renderer->_totalDiffPosX)+L" "+ std::to_wstring(_renderer->_totalDiffPosY)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
 		_spriteBatch->End();
 
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら

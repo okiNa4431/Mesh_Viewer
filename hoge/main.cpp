@@ -1,8 +1,16 @@
 #include <filesystem>
 #include <iostream>
+#include <windows.h>
+
+using namespace std;
 
 int main() {
-    std::filesystem::path currentDir = std::filesystem::current_path();
-    std::cout << "Current Directory: " << currentDir << std::endl;
+    while (true)
+    {
+        POINT currentMousePos;
+        GetCursorPos(&currentMousePos);
+        ScreenToClient(GetActiveWindow(), &currentMousePos);
+        cout << currentMousePos.x << " " << currentMousePos.y << endl;
+    }
     return 0;
 }

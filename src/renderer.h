@@ -31,6 +31,7 @@ private:
 	struct SceneMat
 	{
 		XMMATRIX world;
+		XMMATRIX rotate;
 		XMMATRIX view;
 		XMMATRIX proj;
 	};
@@ -38,24 +39,28 @@ private:
 	ComPtr<ID3D12Resource> _transformMatBuff = nullptr;
 		//保持しておくパラメータ
 	float _angle = 0.0;
-	XMFLOAT3 _eye = XMFLOAT3(0, 0, 400);
+	XMFLOAT3 _eye = XMFLOAT3(400, 400, 400);
 	XMFLOAT3 _target = XMFLOAT3(0, 0, 0);
 	XMFLOAT3 _up = XMFLOAT3(0, 1, 0);
+	float _lastPosX = 0.0f;
+	float _lastPosY = 0.0f;
+	
 		//入力値
 	int _wheel = 0;
-	float _deltaX = 0;
-	float _deltaY = 0;
 
 	//保持するメッシュ
 	std::vector<std::shared_ptr<mesh>> _meshes;
 public:
+	float _totalDiffPosX = 0.0f;
+	float _totalDiffPosY = 0.0f;
+
 	renderer(std::shared_ptr<Dx12Wrapper> dx12);
 	~renderer();
 	void SetPipelineAndSignature();
 	void Draw();
 	void Update();
 	void setMatData();
-	void setInputData(int& wheel, int& dx, int& dy);
+	void setInputData(int& wheel);
 	void AddMesh(const std::string& filePath);
 	void AddMesh(shared_ptr<mesh> mesh);
 };
