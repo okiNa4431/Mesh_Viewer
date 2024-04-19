@@ -6,10 +6,18 @@
 
 #pragma comment(lib, "DirectXTK12.lib")
 #pragma comment(lib, "dxguid.lib")
+
+using namespace std::chrono;
+
 //ウィンドウサイズ
 const unsigned int window_width = 1280;
 const unsigned int window_height = 720;
 ComPtr<ID3D12DescriptorHeap> _heapForSpriteFont;
+
+//開始時間
+system_clock::time_point _frameStart;
+int _fps = 0;
+int _nowMeasureFps = 0;
 
 ///デバッグレイヤーを有効にする
 void EnableDebugLayer() {
@@ -64,6 +72,24 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	if(app._renderer != nullptr) app._renderer->setInputData(wheel, dx, dy);
 
 	return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+//FPS取得
+int getFPS()
+{
+	auto frameEnd = system_clock::now();
+	auto frameDuration = duration_cast<microseconds>(frameEnd - _frameStart).count();
+	_nowMeasureFps++;
+
+	if (frameDuration >= 1'000'000)
+	{
+		_frameStart = frameEnd;
+		frameDuration = 0;
+		_fps = _nowMeasureFps;
+		_nowMeasureFps = 0;
+	}
+
+	return _fps;
 }
 
 //ウィンドウクラスの設定と生成
@@ -163,6 +189,7 @@ bool Application::Init()
 void Application::Run()
 {
 	ShowWindow(_hwnd, SW_SHOW);
+	_frameStart = system_clock::now();//FPS測定のための時間取得
 	MSG msg = {};
 	while (true)
 	{
@@ -184,7 +211,9 @@ void Application::Run()
 		//文字周り(debug)
 		_dx12->CommandList()->SetDescriptorHeaps(1, _heapForSpriteFont.GetAddressOf());
 		_spriteBatch->Begin(_dx12->CommandList().Get());
-		_spriteFont->DrawString(_spriteBatch, L"FPS: ", DirectX::XMFLOAT2(0, 0), DirectX::Colors::Black, 0.0f, XMFLOAT2(0,0), 0.5f);
+		int fps = getFPS();
+		_spriteFont->DrawString(_spriteBatch, ((wstring)L"FPS: " + std::to_wstring(fps)).c_str(), DirectX::XMFLOAT2(0, 0), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
+		_spriteFont->DrawString(_spriteBatch, ((wstring)L"FPS: " + std::to_wstring(fps)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
 		_spriteBatch->End();
 
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら
