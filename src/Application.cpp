@@ -19,6 +19,11 @@ system_clock::time_point _frameStart;
 int _fps = 0;
 int _nowMeasureFps = 0;
 
+//入力値関連
+int _wheel;
+bool _downMButton = false;
+bool _downLButton = false;
+
 ///デバッグレイヤーを有効にする
 void EnableDebugLayer() {
 	ID3D12Debug* debugLayer = nullptr;
@@ -31,17 +36,21 @@ void EnableDebugLayer() {
 //ウィンドウのコールバック関数
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	//rendererに送る入力値
-	int wheel = 0;
 	switch (msg)
 	{
 		case WM_MOUSEWHEEL:
 		{
-			wheel += GET_WHEEL_DELTA_WPARAM(wparam);
+			_wheel = GET_WHEEL_DELTA_WPARAM(wparam);
 			break;
 		}
 		case WM_MBUTTONDOWN:
 		{
+			_downMButton = true;
+			break;
+		}
+		case WM_MBUTTONUP:
+		{
+			_downMButton = false;
 			break;
 		}
 		/*case WM_INPUT:
@@ -66,9 +75,6 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		default:
 			break;
 	}
-
-	auto& app = Application::Instance();
-	if(app._renderer != nullptr) app._renderer->setInputData(wheel);
 
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
@@ -179,6 +185,8 @@ void Application::Run()
 	MSG msg = {};
 	while (true)
 	{
+		_wheel = 0;//マウスへ送る用のスクロール量を初期化
+
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -192,7 +200,7 @@ void Application::Run()
 		_renderer->SetPipelineAndSignature();//パイプラインとシグネチャのセット
 		_renderer->setMatData();//座標変換用の行列をセット
 		_renderer->Draw();//rendererの保持するmeshのDraw()を呼ぶ。頂点インデックスビューとトポロジーを設定した後に描画する。
-		_renderer->Update(_hwnd);//座標変換の値更新等
+		_renderer->Update(_wheel, _downMButton);//座標変換の値更新等
 
 		//文字周り(debug用)
 		_dx12->CommandList()->SetDescriptorHeaps(1, _heapForSpriteFont.GetAddressOf());

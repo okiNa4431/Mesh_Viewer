@@ -255,14 +255,14 @@ void renderer::Draw()
 	}
 }
 
-void renderer::Update(HWND& hwnd)
+void renderer::Update(int wheel, bool downMButton)
 {
 	//入力値によって座標変換
 	//ホイールの入力値によって拡大縮小
 	XMVECTOR t2eVecN = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&_eye), XMLoadFloat3(&_target)));
 	XMFLOAT3 scalingFloat3;
-	if ((1 << 16) / 2 < _wheel) _wheel = _wheel - (1 << 16);//拡大時は入力値が1<<16から引いた値になるので負の値になるよう修正
-	XMStoreFloat3(&scalingFloat3, (float)_wheel/10.0 * t2eVecN);
+	if ((1 << 16) / 2 < wheel) wheel = wheel - (1 << 16);//拡大時は入力値が1<<16から引いた値になるので負の値になるよう修正
+	XMStoreFloat3(&scalingFloat3, (float)wheel/10.0 * t2eVecN);
 	_eye.x += scalingFloat3.x; _eye.y += scalingFloat3.y; _eye.z += scalingFloat3.z;
 	//マウス中ボタン押しながらで平行移動(ここではマウスの移動量をもらうだけ)
 	POINT currentMousePos;
@@ -275,8 +275,6 @@ void renderer::Update(HWND& hwnd)
 	}
 	_lastPosX = currentMousePos.x;
 	_lastPosY = currentMousePos.y;
-	//入力値のリセット
-	_wheel = 0;
 
 	//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
 	auto& app = Application::Instance();
@@ -316,11 +314,6 @@ void renderer::setMatData()
 	auto cmdList = _dx12->CommandList();
 	cmdList->SetDescriptorHeaps(1, &_descHeap);
 	cmdList->SetGraphicsRootDescriptorTable(0, _descHeap->GetGPUDescriptorHandleForHeapStart());
-}
-
-void renderer::setInputData(int& wheel)
-{
-	_wheel = wheel;
 }
 
 void renderer::AddMesh(shared_ptr<mesh> mesh)
