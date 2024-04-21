@@ -38,10 +38,12 @@ private:
 	HRESULT setSceneMatrix();//行列の設定
 	ComPtr<ID3D12Resource> _transformMatBuff = nullptr;
 		//保持しておくパラメータ
-	float _angle = 0.0;
 	XMFLOAT3 _eye = XMFLOAT3(400, 400, 400);
 	XMFLOAT3 _target = XMFLOAT3(0, 0, 0);
 	XMFLOAT3 _up = XMFLOAT3(0, 1, 0);
+	XMFLOAT3 _worldPos = XMFLOAT3(0, 0, 0);
+	XMFLOAT3 _changePos = XMFLOAT3(0, 0, 0);
+	float _angle = 0.0;
 	float _lastPosX = 0.0f;
 	float _lastPosY = 0.0f;
 

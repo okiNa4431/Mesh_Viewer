@@ -296,7 +296,23 @@ void renderer::Update(int wheel, bool downMButton)
 		//ワールド空間での平面の基底ベクトルにマウスの移動量をかける
 	worldDownVec *= -_totalDiffPosY/(window.cy/2.0f);
 	worldRightVec *= _totalDiffPosX/ (window.cx / 2.0f);
-	auto worMat = XMMatrixTranslation(worldDownVec.m128_f32[0]+worldRightVec.m128_f32[0], worldDownVec.m128_f32[1] + worldRightVec.m128_f32[1], worldDownVec.m128_f32[2] + worldRightVec.m128_f32[2]);
+		//マウス中ボタンを押していたら移動量に比例して平行移動
+	if (downMButton)
+	{
+		_changePos.x = worldDownVec.m128_f32[0] + worldRightVec.m128_f32[0];
+		_changePos.y = worldDownVec.m128_f32[1] + worldRightVec.m128_f32[1];
+		_changePos.z = worldDownVec.m128_f32[2] + worldRightVec.m128_f32[2];
+	}
+	else
+	{
+		_worldPos.x += _changePos.x;
+		_worldPos.y += _changePos.y;
+		_worldPos.z += _changePos.z;
+		_changePos = XMFLOAT3(0, 0, 0);
+		_totalDiffPosX = 0.0;
+		_totalDiffPosY = 0.0;
+	}
+	auto worMat = XMMatrixTranslation(_worldPos.x+_changePos.x, _worldPos.y + _changePos.y, _worldPos.z + _changePos.z);
 	auto rotateMat = XMMatrixRotationY(_angle);
 
 	//マップ
