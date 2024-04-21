@@ -255,14 +255,14 @@ void renderer::Draw()
 	}
 }
 
-void renderer::Update(int wheel, bool downMButton)
+void renderer::Update(int wheel, bool downMButton, bool downLButton)
 {
 	//入力値によって座標変換
 	//ホイールの入力値によって拡大縮小
-	XMVECTOR t2eVecN = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&_eye), XMLoadFloat3(&_target)));
+	XMVECTOR t2eVecN = XMVectorSubtract(XMLoadFloat3(&_eye), XMLoadFloat3(&_target));
 	XMFLOAT3 scalingFloat3;
 	if ((1 << 16) / 2 < wheel) wheel = wheel - (1 << 16);//拡大時は入力値が1<<16から引いた値になるので負の値になるよう修正
-	XMStoreFloat3(&scalingFloat3, (float)wheel/10.0 * t2eVecN);
+	XMStoreFloat3(&scalingFloat3, (float)wheel*XMVector3Length(t2eVecN).m128_f32[0]/1000.0 * XMVector3Normalize(t2eVecN));
 	_eye.x += scalingFloat3.x; _eye.y += scalingFloat3.y; _eye.z += scalingFloat3.z;
 	//マウス中ボタン押しながらで平行移動(ここではマウスの移動量をもらうだけ)
 	POINT currentMousePos;
@@ -275,12 +275,11 @@ void renderer::Update(int wheel, bool downMButton)
 	}
 	_lastPosX = currentMousePos.x;
 	_lastPosY = currentMousePos.y;
-
 	//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
 	auto& app = Application::Instance();
 	SIZE window = app.GetWindowSize();
 	auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&_eye), XMLoadFloat3(&_target), XMLoadFloat3(&_up));
-	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2, static_cast<float>(window.cx) / static_cast<float>(window.cy), 1.0f, 1000.0f);
+	auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2*2.0f/3.0f, static_cast<float>(window.cx) / static_cast<float>(window.cy), 0.1f, 10000.0f);
 		//得たスクリーン座標でのマウスの差をワールド座標へ変換し、ワールド行列に変換
 	XMVECTOR downVector = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 	downVector = XMVector3Transform(downVector, XMMatrixInverse(nullptr, projMat));
@@ -296,6 +295,8 @@ void renderer::Update(int wheel, bool downMButton)
 		//ワールド空間での平面の基底ベクトルにマウスの移動量をかける
 	worldDownVec *= -_totalDiffPosY/(window.cy/2.0f);
 	worldRightVec *= _totalDiffPosX/ (window.cx / 2.0f);
+
+	//実際の移動
 		//マウス中ボタンを押していたら移動量に比例して平行移動
 	if (downMButton)
 	{
@@ -303,17 +304,27 @@ void renderer::Update(int wheel, bool downMButton)
 		_changePos.y = worldDownVec.m128_f32[1] + worldRightVec.m128_f32[1];
 		_changePos.z = worldDownVec.m128_f32[2] + worldRightVec.m128_f32[2];
 	}
+		//マウス左ボタンを押していたら移動量に比例して回転(平行移動優先)
+	else if (downLButton)
+	{
+		_changePhi = (_totalDiffPosX) * 0.003f;
+	}
 	else
 	{
+		//平行移動情報の保存
 		_worldPos.x += _changePos.x;
 		_worldPos.y += _changePos.y;
 		_worldPos.z += _changePos.z;
 		_changePos = XMFLOAT3(0, 0, 0);
+		//回転情報の保存
+		_phi += _changePhi;
+		_changePhi = 0.0f;
+		//マウスの移動情報のリセット
 		_totalDiffPosX = 0.0;
 		_totalDiffPosY = 0.0;
 	}
 	auto worMat = XMMatrixTranslation(_worldPos.x+_changePos.x, _worldPos.y + _changePos.y, _worldPos.z + _changePos.z);
-	auto rotateMat = XMMatrixRotationY(_angle);
+	auto rotateMat = XMMatrixRotationY(_phi+_changePhi);
 
 	//マップ
 	SceneMat* mapSceneMat = nullptr;

@@ -30,7 +30,6 @@ void EnableDebugLayer() {
 	auto result = D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
 	debugLayer->EnableDebugLayer();
 	debugLayer->Release();
-
 }
 
 //ウィンドウのコールバック関数
@@ -51,6 +50,16 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		case WM_MBUTTONUP:
 		{
 			_downMButton = false;
+			break;
+		}
+		case WM_LBUTTONDOWN:
+		{
+			_downLButton = true;
+			break;
+		}
+		case WM_LBUTTONUP:
+		{
+			_downLButton = false;
 			break;
 		}
 		/*case WM_INPUT:
@@ -200,14 +209,14 @@ void Application::Run()
 		_renderer->SetPipelineAndSignature();//パイプラインとシグネチャのセット
 		_renderer->setMatData();//座標変換用の行列をセット
 		_renderer->Draw();//rendererの保持するmeshのDraw()を呼ぶ。頂点インデックスビューとトポロジーを設定した後に描画する。
-		_renderer->Update(_wheel, _downMButton);//座標変換の値更新等
+		_renderer->Update(_wheel, _downMButton, _downLButton);//座標変換の値更新等
 
 		//文字周り(debug用)
 		_dx12->CommandList()->SetDescriptorHeaps(1, _heapForSpriteFont.GetAddressOf());
 		_spriteBatch->Begin(_dx12->CommandList().Get());
 		int fps = getFPS();
 		_spriteFont->DrawString(_spriteBatch, ((wstring)L"FPS: " + std::to_wstring(fps)).c_str(), DirectX::XMFLOAT2(0, 0), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
-		//_spriteFont->DrawString(_spriteBatch, ((wstring)L"Position: " + std::to_wstring(_renderer->_totalDiffPosX)+L" "+ std::to_wstring(_renderer->_totalDiffPosY)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
+		//_spriteFont->DrawString(_spriteBatch, ((wstring)L"Position: " + std::to_wstring(_mouseX)+L" "+ std::to_wstring(_mouseY)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
 		_spriteBatch->End();
 
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら

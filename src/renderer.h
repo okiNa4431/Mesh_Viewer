@@ -43,9 +43,11 @@ private:
 	XMFLOAT3 _up = XMFLOAT3(0, 1, 0);
 	XMFLOAT3 _worldPos = XMFLOAT3(0, 0, 0);
 	XMFLOAT3 _changePos = XMFLOAT3(0, 0, 0);
-	float _angle = 0.0;
+	float _phi = 0.0f;
+	float _changePhi = 0.0f;
 	float _lastPosX = 0.0f;
 	float _lastPosY = 0.0f;
+	float _angle = 0.0;
 
 	//ï€éùÇ∑ÇÈÉÅÉbÉVÉÖ
 	std::vector<std::shared_ptr<mesh>> _meshes;
@@ -57,7 +59,7 @@ public:
 	~renderer();
 	void SetPipelineAndSignature();
 	void Draw();
-	void Update(int wheel, bool downMButton);
+	void Update(int wheel, bool downMButton, bool downLButton);
 	void setMatData();
 	void AddMesh(const std::string& filePath);
 	void AddMesh(shared_ptr<mesh> mesh);
