@@ -22,15 +22,11 @@ private:
 
 	std::shared_ptr<Dx12Wrapper> _dx12;
 
-	//入力デバイス(マウス)
-	RAWINPUTDEVICE _mouse;
-	void GetMouseDevice(RAWINPUTDEVICE& mouse);
-
 	//ウィンドウ上の文字関連
 	DirectX::GraphicsMemory* _geometry = nullptr;
 	DirectX::SpriteFont* _spriteFont = nullptr;
 	DirectX::SpriteBatch* _spriteBatch = nullptr;
-	
+
 	//シングルトンなのでコンストラクタをここに置いておく
 	Application();
 	Application(const Application&) = delete;

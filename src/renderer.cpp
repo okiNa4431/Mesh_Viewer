@@ -255,7 +255,7 @@ void renderer::Draw()
 	}
 }
 
-void renderer::Update()
+void renderer::Update(HWND& hwnd)
 {
 	//入力値によって座標変換
 	//ホイールの入力値によって拡大縮小

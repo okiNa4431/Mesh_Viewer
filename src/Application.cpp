@@ -35,7 +35,16 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	int wheel = 0;
 	switch (msg)
 	{
-		case WM_INPUT:
+		case WM_MOUSEWHEEL:
+		{
+			wheel += GET_WHEEL_DELTA_WPARAM(wparam);
+			break;
+		}
+		case WM_MBUTTONDOWN:
+		{
+			break;
+		}
+		/*case WM_INPUT:
 		{
 			UINT size = 0;
 			GetRawInputData((HRAWINPUT)lparam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER));
@@ -47,12 +56,6 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 				}
 			}
 			delete[] buffer;
-			break;
-		}
-		/*case WM_MOUSEMOVE:
-		{
-				x = GET_X_LPARAM(lparam);
-				y = GET_Y_LPARAM(lparam);
 			break;
 		}*/
 		case WM_DESTROY:
@@ -114,16 +117,6 @@ void Application::CreateGameWindow(HWND& hwnd, WNDCLASSEX& w)
 	);
 }
 
-//マウスの取得
-void Application::GetMouseDevice(RAWINPUTDEVICE& mouse)
-{
-	mouse.usUsagePage = 0x01;
-	mouse.usUsage = 0x02;
-	mouse.dwFlags = 0;
-	mouse.hwndTarget = 0;
-	RegisterRawInputDevices(&mouse, 1, sizeof mouse);
-}
-
 SIZE Application::GetWindowSize()const
 {
 	SIZE ret;
@@ -142,9 +135,6 @@ bool Application::Init()
 {
 	//ウィンドウ関連
 	CreateGameWindow(_hwnd, _windowClass);
-
-	//入力デバイス取得
-	GetMouseDevice(_mouse);
 
 #ifdef _DEBUG
 	//デバッグレイヤーをオンに
@@ -202,14 +192,14 @@ void Application::Run()
 		_renderer->SetPipelineAndSignature();//パイプラインとシグネチャのセット
 		_renderer->setMatData();//座標変換用の行列をセット
 		_renderer->Draw();//rendererの保持するmeshのDraw()を呼ぶ。頂点インデックスビューとトポロジーを設定した後に描画する。
-		_renderer->Update();//座標変換の値更新等
+		_renderer->Update(_hwnd);//座標変換の値更新等
 
-		//文字周り(debug)
+		//文字周り(debug用)
 		_dx12->CommandList()->SetDescriptorHeaps(1, _heapForSpriteFont.GetAddressOf());
 		_spriteBatch->Begin(_dx12->CommandList().Get());
 		int fps = getFPS();
 		_spriteFont->DrawString(_spriteBatch, ((wstring)L"FPS: " + std::to_wstring(fps)).c_str(), DirectX::XMFLOAT2(0, 0), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
-		_spriteFont->DrawString(_spriteBatch, ((wstring)L"Position: " + std::to_wstring(_renderer->_totalDiffPosX)+L" "+ std::to_wstring(_renderer->_totalDiffPosY)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
+		//_spriteFont->DrawString(_spriteBatch, ((wstring)L"Position: " + std::to_wstring(_renderer->_totalDiffPosX)+L" "+ std::to_wstring(_renderer->_totalDiffPosY)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
 		_spriteBatch->End();
 
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら

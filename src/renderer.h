@@ -58,7 +58,7 @@ public:
 	~renderer();
 	void SetPipelineAndSignature();
 	void Draw();
-	void Update();
+	void Update(HWND& hwnd);
 	void setMatData();
 	void setInputData(int& wheel);
 	void AddMesh(const std::string& filePath);
