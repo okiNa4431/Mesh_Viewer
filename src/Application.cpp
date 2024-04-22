@@ -216,7 +216,7 @@ void Application::Run()
 		_spriteBatch->Begin(_dx12->CommandList().Get());
 		int fps = getFPS();
 		_spriteFont->DrawString(_spriteBatch, ((wstring)L"FPS: " + std::to_wstring(fps)).c_str(), DirectX::XMFLOAT2(0, 0), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
-		//_spriteFont->DrawString(_spriteBatch, ((wstring)L"Position: " + std::to_wstring(_mouseX)+L" "+ std::to_wstring(_mouseY)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
+		_spriteFont->DrawString(_spriteBatch, ((wstring)L"phi: " + std::to_wstring((_renderer->_phi + _renderer->_changePhi) * 180.0 / XM_PI) + L", theta: " + std::to_wstring((_renderer->_theta + _renderer->_changeTheta) * 180.0 / XM_PI)).c_str(), DirectX::XMFLOAT2(0, 20), DirectX::Colors::Black, 0.0f, XMFLOAT2(0, 0), 0.5f);
 		_spriteBatch->End();
 
 		_dx12->EndDraw();//コマンドキューのクローズやらフェンスやら

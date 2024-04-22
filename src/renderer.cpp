@@ -188,7 +188,7 @@ HRESULT renderer::setSceneMatrix()
 {
 	//行列の生成(初期値)
 	auto worMat = XMMatrixIdentity();
-	auto rotateMat = XMMatrixRotationY(_angle);
+	auto rotateMat = XMMatrixIdentity();
 		//行列を生成する前にApplicationクラス経由でウィンドウのサイズをもらう
 	auto& app = Application::Instance();
 	SIZE window = app.GetWindowSize();
@@ -307,7 +307,20 @@ void renderer::Update(int wheel, bool downMButton, bool downLButton)
 		//マウス左ボタンを押していたら移動量に比例して回転(平行移動優先)
 	else if (downLButton)
 	{
-		_changePhi = (_totalDiffPosX) * 0.003f;
+		_changePhi = -(_totalDiffPosX) * 0.003f;
+		_changeTheta = (_totalDiffPosY) * 0.003f;
+		if (_changeTheta + _theta > XM_PI/2.0f)
+		{
+			_changeTheta = XM_PI/2.0f-_theta;
+			//_phi += XM_PI;
+		}
+		if (_changeTheta + _theta < -XM_PI / 2.0f)
+		{
+			_changeTheta = -_theta - XM_PI/2.0f;
+			//_phi -= XM_PI;
+		}
+		if (_changePhi + _phi > 2.0f*XM_PI)_phi -= 2.0f*XM_PI;
+		if(_changePhi + _phi < 0.0f) _phi += 2.0f * XM_PI;
 	}
 	else
 	{
@@ -319,12 +332,14 @@ void renderer::Update(int wheel, bool downMButton, bool downLButton)
 		//回転情報の保存
 		_phi += _changePhi;
 		_changePhi = 0.0f;
+		_theta += _changeTheta;
+		_changeTheta = 0.0f;
 		//マウスの移動情報のリセット
 		_totalDiffPosX = 0.0;
 		_totalDiffPosY = 0.0;
 	}
 	auto worMat = XMMatrixTranslation(_worldPos.x+_changePos.x, _worldPos.y + _changePos.y, _worldPos.z + _changePos.z);
-	auto rotateMat = XMMatrixRotationY(_phi+_changePhi);
+	auto rotateMat = XMMatrixRotationRollPitchYaw(cos(_changePhi + _phi)*(_changeTheta + _theta), _changePhi + _phi, sin(_changePhi + _phi) * (_changeTheta + _theta));
 
 	//マップ
 	SceneMat* mapSceneMat = nullptr;
