@@ -163,7 +163,7 @@ bool Application::Init()
 	_renderer.reset(new renderer(_dx12));
 
 	//ƒƒbƒVƒ…“Ç‚Ýž‚Ý
-	_renderer->AddMesh("C:\\Users\\NaokiMurakami\\3D Objects\\walkman.ply");
+	_renderer->AddMesh("D:\\MeshFromPointCloud\\hoge.ply");
 
 	//GraphicsMemory‰Šú‰»
 	_geometry = new DirectX::GraphicsMemory(_dx12->Device());

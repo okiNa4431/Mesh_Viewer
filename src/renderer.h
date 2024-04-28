@@ -34,6 +34,7 @@ private:
 		XMMATRIX rotate;
 		XMMATRIX view;
 		XMMATRIX proj;
+		XMFLOAT3 eye;
 	};
 	HRESULT setSceneMatrix();//çsóÒÇÃê›íË
 	ComPtr<ID3D12Resource> _transformMatBuff = nullptr;

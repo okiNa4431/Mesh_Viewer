@@ -16,7 +16,7 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 {
 	//ASCII形式のPLYファイル読みこみ
 	printf("Reading PLY File.\n");
-	ifstream ifs(filePath, ios::binary);
+	ifstream ifs(filePath.c_str(), ios::in | ios::binary);
 	if (!ifs)
 	{
 		printf("Not Found File\n");
@@ -60,18 +60,23 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 			ifs >> property;
 			if (property == "nx") haveNormal = true;
 		}
+		else if (headerStr == "end_header")
+		{
+			getline(ifs, headerStr);
+			break;
+		}
 	}
 	printf("vertex: %u, face: %u\n", vertNum, indiceNum);
 
 	//頂点データ読み込み
-	vector<XMVECTOR> position(vertNum);
+	vector<XMFLOAT3> position(vertNum);
 	if (IsASCII)
 	{
 		for (int i = 0; i < vertNum; i++)
 		{
 			float x, y, z;
 			ifs >> x >> y >> z;
-			position[i] = XMVectorSet(x, y, z, 0.0f);
+			position[i] = XMFLOAT3(x, y, z);
 		}
 
 		for (int i = 0; i < indiceNum; i++)
@@ -85,12 +90,37 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	}
 	else
 	{
-		//ifs.read(reinterpret_cast<char*>(vertices.data()), vertNum * 12);
-		//ifs.read(reinterpret_cast<char*>(indices.data()), indiceNum * sizeof(indices[0]));
+		indices.resize(indiceNum*3);
+		for (int i = 0; i < vertNum; i++)
+		{
+			float pos[3];
+			ifs.read((char*)pos, sizeof(float) * 3);
+			position[i] = XMFLOAT3(pos[0], pos[1], pos[2]);
+		}
+		//ifs.read(reinterpret_cast<char*>(position.data()), vertNum * sizeof(XMFLOAT3));
+		for (int i = 0; i < indiceNum; i++)
+		{
+			//プロパティ数を得る
+			uint8_t buff;
+			ifs.read(reinterpret_cast<char*>(&buff), sizeof(uint8_t));
+
+			//プロパティ(主にインデックス情報)を読み込んで格納
+			const uint8_t property_size = buff - 'A' + 1;
+			uint32_t index_line[3];
+			ifs.read(reinterpret_cast<char*>(&index_line), sizeof(indices[0])*3);
+			indices[3 * i] = index_line[0];
+			indices[3 * i + 1] = index_line[1];
+			indices[3 * i + 2] = index_line[2];
+		}
+		//ifs.read(reinterpret_cast<char*>(indices.data()), indiceNum * 4 * sizeof(indices[0]));
 	}
+	/*for (int i = 0; i < indiceNum*4; i++)
+	{
+		cout << i << " "<<indices[i]<<endl;
+	}*/
 
 	//法線を持っていない場合はここで法線を計算
-	vector<vector<XMVECTOR>> vertNormals(vertNum,vector<XMVECTOR>(0));
+	vector<vector<XMVECTOR>> vertNormals(vertNum, vector<XMVECTOR>(0));
 	if (!haveNormal)
 	{
 		for (int i = 0; i < indiceNum; i++)
@@ -98,8 +128,8 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 			const unsigned int a = indices[i * 3];
 			const unsigned int b = indices[i * 3+1];
 			const unsigned int c = indices[i * 3+2];
-			const XMVECTOR abVec = XMVectorSubtract(position[b], position[a]);
-			const XMVECTOR acVec = XMVectorSubtract(position[c], position[a]);
+			const XMVECTOR abVec = XMVectorSubtract(XMLoadFloat3(&position[b]), XMLoadFloat3(&position[a]));
+			const XMVECTOR acVec = XMVectorSubtract(XMLoadFloat3(&position[c]), XMLoadFloat3(&position[a]));
 			const XMVECTOR normal = XMVector3Normalize(XMVector3Cross(abVec, acVec));
 			vertNormals[a].push_back(normal);
 			vertNormals[b].push_back(normal);
@@ -113,7 +143,7 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 		//座標情報
 		for (int j = 0; j < 3; j++)
 		{
-			const float posJ = XMVectorGetByIndex(position[i], j);
+			const float posJ = XMVectorGetByIndex(XMLoadFloat3(&position[i]), j);
 			const unsigned char* posJPtr = reinterpret_cast<const unsigned char*>(&posJ);
 			vertices.insert(vertices.end(), posJPtr, posJPtr + sizeof(float));
 		}

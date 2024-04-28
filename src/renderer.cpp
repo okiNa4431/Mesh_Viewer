@@ -28,7 +28,7 @@ HRESULT renderer::CreateSignature()
 	//テーブル
 	D3D12_ROOT_PARAMETER rootParams[1] = {};
 	rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	rootParams[0].DescriptorTable.pDescriptorRanges = &descRange[0];
 	rootParams[0].DescriptorTable.NumDescriptorRanges = 1;
 
@@ -215,6 +215,7 @@ HRESULT renderer::setSceneMatrix()
 	mapSceneMat->rotate = rotateMat;
 	mapSceneMat->view = viewMat;
 	mapSceneMat->proj = projMat;
+	mapSceneMat->eye = _eye;
 	_transformMatBuff->Unmap(0, nullptr);
 
 	//ビューを生成
@@ -348,6 +349,7 @@ void renderer::Update(int wheel, bool downMButton, bool downLButton)
 	mapSceneMat->rotate = rotateMat;
 	mapSceneMat->view = viewMat;
 	mapSceneMat->proj = projMat;
+	mapSceneMat->eye = _eye;
 	_transformMatBuff->Unmap(0, nullptr);
 }
 

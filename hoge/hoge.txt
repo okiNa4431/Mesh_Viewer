@@ -1,3 +1,11 @@
-this is a pen
-this is a apple
-applepen
+ply
+format binary_little_endian 1.0
+comment Created in Blender version 4.0.1
+element vertex 3414
+property float x
+property float y
+property float z
+element face 3424
+property list uchar uint vertex_indices
+end_header
+1.0 1.0 1.0
