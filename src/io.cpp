@@ -90,7 +90,6 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 	}
 	else
 	{
-		indices.resize(indiceNum*3);
 		for (int i = 0; i < vertNum; i++)
 		{
 			float pos[3];
@@ -105,12 +104,26 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 			ifs.read(reinterpret_cast<char*>(&buff), sizeof(uint8_t));
 
 			//プロパティ(主にインデックス情報)を読み込んで格納
-			const uint8_t property_size = buff - 'A' + 1;
-			uint32_t index_line[3];
-			ifs.read(reinterpret_cast<char*>(&index_line), sizeof(indices[0])*3);
-			indices[3 * i] = index_line[0];
-			indices[3 * i + 1] = index_line[1];
-			indices[3 * i + 2] = index_line[2];
+			if (buff == 3)
+			{
+				uint32_t index_line[3];
+				ifs.read(reinterpret_cast<char*>(&index_line), sizeof(indices[0]) * 3);
+				indices.push_back(index_line[0]);
+				indices.push_back(index_line[1]);
+				indices.push_back(index_line[2]);
+			}
+			else if (buff == 4)
+			{
+				uint32_t index_line[4];
+				ifs.read(reinterpret_cast<char*>(&index_line), sizeof(indices[0]) * 4);
+				indices.push_back(index_line[0]);
+				indices.push_back(index_line[1]);
+				indices.push_back(index_line[2]);
+				indices.push_back(index_line[0]);
+				indices.push_back(index_line[2]);
+				indices.push_back(index_line[3]);
+			}
+			
 		}
 		//ifs.read(reinterpret_cast<char*>(indices.data()), indiceNum * 4 * sizeof(indices[0]));
 	}
