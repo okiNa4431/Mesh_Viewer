@@ -163,7 +163,7 @@ bool Application::Init()
 	_renderer.reset(new renderer(_dx12));
 
 	//ƒƒbƒVƒ…“Ç‚Ýž‚Ý
-	_renderer->AddMesh("C:\\Users\\NaokiMurakami\\3D Objects\\bunny_voxel.ply");
+	_renderer->AddMesh("C:\\Users\\NaokiMurakami\\3D Objects\\lowpolycat\\cat_obj.obj");
 
 	//GraphicsMemory‰Šú‰»
 	_geometry = new DirectX::GraphicsMemory(_dx12->Device());

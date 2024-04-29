@@ -2,6 +2,7 @@
 #include <cassert>
 #include <array>
 #include <DirectXMath.h>
+#include <sstream>
 
 using namespace DirectX;
 
@@ -14,7 +15,6 @@ string GetExtension(const string& filePath)
 //以下、メッシュの読み込み関数
 bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)
 {
-	//ASCII形式のPLYファイル読みこみ
 	printf("Reading PLY File.\n");
 	ifstream ifs(filePath.c_str(), ios::in | ios::binary);
 	if (!ifs)
@@ -81,11 +81,27 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 
 		for (int i = 0; i < indiceNum; i++)
 		{
-			unsigned int topo, x, y, z;
-			ifs >> topo >> x >> y >> z;
-			indices.push_back(x);
-			indices.push_back(y);
-			indices.push_back(z);
+			uint8_t topo;
+			ifs >> topo;
+			if (topo == 3)
+			{
+				unsigned int x, y, z;
+				ifs >> x >> y >> z;
+				indices.push_back(x);
+				indices.push_back(y);
+				indices.push_back(z);
+			}
+			else
+			{
+				unsigned int x, y, z, w;
+				ifs >> x >> y >> z >> w;
+				indices.push_back(x);
+				indices.push_back(y);
+				indices.push_back(z);
+				indices.push_back(x);
+				indices.push_back(z);
+				indices.push_back(w);
+			}
 		}
 	}
 	else
@@ -178,8 +194,140 @@ bool Read_ply(const string& filePath, vector<unsigned char>& vertices, vector<un
 				vertices.insert(vertices.end(), norJPtr, norJPtr + sizeof(float));
 			}
 		}
-		
 	}
+
+	ifs.close();
+	return true;
+}
+
+bool Read_obj(const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)
+{
+	//ファイルを開く
+	printf("Reading OBJ File.\n");
+	ifstream ifs(filePath.c_str(), ios::in);
+	if (!ifs)
+	{
+		printf("Not Found File\n");
+		return false;
+	}
+
+	//読み込み
+		//面情報を読み込むときに使うフラグ
+	bool existPos = false;
+	bool existNor = false;
+	bool existTex = false;
+	string key;	//各行冒頭のキーワードを読み込む
+	float vertexData[3]; //一旦書き込む用の配列
+	vector<XMFLOAT3> positions; //座標書き込み用
+	vector<XMVECTOR> normals; //法線書き込み用
+	vector<XMFLOAT2> textureUV; //テクスチャ座標書き込み用
+	vector<vector<int>> index_each_param(0, vector<int>(3,0)); //インデックス書き込み用
+	const vector<int> initializeInts = { 0,0,0 };
+	while (!ifs.eof())
+	{
+		ifs >> key;
+		if (key[0] == '#') getline(ifs, key);
+		else if (key == "v")
+		{
+			existPos = true;
+			ifs >> vertexData[0] >> vertexData[1] >> vertexData[2];
+			positions.push_back(XMFLOAT3(vertexData[0], vertexData[1], vertexData[2]));
+		}
+		else if (key == "vn")
+		{
+			existNor = true;
+			ifs >> vertexData[0] >> vertexData[1] >> vertexData[2];
+			XMVECTOR n = { vertexData[0],vertexData[1],vertexData[2] };
+			normals.push_back(n);
+		}
+		else if (key == "vt")
+		{
+			existTex = true;
+			ifs >> vertexData[0] >> vertexData[1];
+			textureUV.push_back(XMFLOAT2(vertexData[0], vertexData[1]));
+		}
+		else if (key == "f")
+		{
+			//面情報を一列分取る
+			getline(ifs, key);
+			if (!key.empty())
+			{
+				istringstream line(key);
+				string vert_str;
+				//各頂点の情報を取る
+				while (getline(line, vert_str, ' '))
+				{
+					if (!vert_str.empty())
+					{
+						//各頂点の各パラメータの情報を取る
+						int i = 0;
+						index_each_param.push_back(initializeInts);
+						istringstream vertStream(vert_str);
+						string para_str;
+						while (getline(vertStream, para_str, '/'))
+						{
+							if (!para_str.empty())
+							{
+								int idx = stoi(para_str);
+								index_each_param[(int)index_each_param.size() - 1][i] = idx;
+							}
+							i++;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	//引数の配列に格納
+	//flat shadingのために面毎に頂点を作る
+	const unsigned int vertNum = (unsigned int)index_each_param.size();
+	const unsigned int indiceNum = (unsigned int)index_each_param.size();
+	printf("vertex: %u, face: %u\n", vertNum, indiceNum);
+
+	//法線情報がない時は計算する
+	if (!existNor)
+	{
+		normals.resize(vertNum);
+		for (int i = 0; i < vertNum/3; i++)
+		{
+			const XMFLOAT3 aPos = positions[index_each_param[3*i][0] - 1];
+			const XMFLOAT3 bPos = positions[index_each_param[3*i+1][0] - 1];
+			const XMFLOAT3 cPos = positions[index_each_param[3*i+2][0] - 1];
+			const XMVECTOR abVec = XMVectorSubtract(XMLoadFloat3(&bPos), XMLoadFloat3(&aPos));
+			const XMVECTOR acVec = XMVectorSubtract(XMLoadFloat3(&cPos), XMLoadFloat3(&aPos));
+			const XMVECTOR normal = XMVector3Normalize(XMVector3Cross(abVec, acVec));
+			normals[3 * i] = normal;
+			normals[3 * i + 1] = normal;
+			normals[3 * i + 2] = normal;
+			index_each_param[3 * i][2] = 3 * i+1;
+			index_each_param[3 * i + 1][2] = 3 * i + 2;
+			index_each_param[3 * i + 2][2] = 3 * i + 3;
+		}
+	}
+
+	//ここでverticeにデータを格納
+	for (int i = 0; i < vertNum; i++)
+	{
+		//座標情報
+		for (int j = 0; j < 3; j++)
+		{
+			const float posJ = XMVectorGetByIndex(XMLoadFloat3(&positions[index_each_param[i][0]-1]), j);
+			const unsigned char* posJPtr = reinterpret_cast<const unsigned char*>(&posJ);
+			vertices.insert(vertices.end(), posJPtr, posJPtr + sizeof(float));
+		}
+
+		//法線情報
+		for (int j = 0; j < 3; j++)
+		{
+			const float posJ = XMVectorGetByIndex(XMVector3Normalize(normals[index_each_param[i][2] - 1]), j);
+			const unsigned char* posJPtr = reinterpret_cast<const unsigned char*>(&posJ);
+			vertices.insert(vertices.end(), posJPtr, posJPtr + sizeof(float));
+		}
+	}
+
+	//indicesにデータを格納
+	for (int i = 0; i < indiceNum; i++) indices.push_back(i);
 
 	ifs.close();
 	return true;
@@ -212,6 +360,8 @@ io::io()
 	//ここに他のデータ形式を書き連ねていく
 	_ext2readFunc["ply"] = [](const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)->bool
 		{ return Read_ply(filePath, vertices, indices); };
+	_ext2readFunc["obj"] = [](const string& filePath, vector<unsigned char>& vertices, vector<unsigned int>& indices)->bool
+		{ return Read_obj(filePath, vertices, indices); };
 }
 io::~io()
 {
