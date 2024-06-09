@@ -163,7 +163,7 @@ bool Application::Init()
 	_renderer.reset(new renderer(_dx12));
 
 	//ƒƒbƒVƒ…“Ç‚Ýž‚Ý
-	_renderer->AddMesh("C:\\Users\\NaokiMurakami\\3D Objects\\lowpolycat\\cat_obj.obj");
+	_renderer->AddMesh("path/to/mesh");
 
 	//GraphicsMemory‰Šú‰»
 	_geometry = new DirectX::GraphicsMemory(_dx12->Device());
@@ -176,8 +176,12 @@ bool Application::Init()
 	_spriteBatch = new DirectX::SpriteBatch(_dx12->Device(), resUploadBatch, pd);
 
 	//SpriteFont‰Šú‰»
+	const string currentPath_str = filesystem::current_path().string();
+	const filesystem::path trueCurrentPath = currentPath_str.substr(0, currentPath_str.find("MyMeshViewer") + 13);
+	const filesystem::path absolutePath = trueCurrentPath / "font" / "fonttest.spritefont";
 	_heapForSpriteFont = _dx12->CreateDesHeapForSpriteFont();
-	_spriteFont = new DirectX::SpriteFont(_dx12->Device(), resUploadBatch, L"C:\\Users\\NaokiMurakami\\source\\repos\\MyMeshViewer\\font\\fonttest.spritefont", _heapForSpriteFont->GetCPUDescriptorHandleForHeapStart(), _heapForSpriteFont->GetGPUDescriptorHandleForHeapStart());
+	const wstring font_path = absolutePath.wstring();
+	_spriteFont = new DirectX::SpriteFont(_dx12->Device(), resUploadBatch, font_path.c_str(), _heapForSpriteFont->GetCPUDescriptorHandleForHeapStart(), _heapForSpriteFont->GetGPUDescriptorHandleForHeapStart());
 	
 	auto future = resUploadBatch.End(_dx12->CmdQue().Get());
 	_dx12->WaitForCommandQueue();

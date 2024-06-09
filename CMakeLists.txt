@@ -15,4 +15,3 @@ set(CMAKE_CXX_STANDARD 17)
 
 # サブプロジェクトを含めます。
 add_subdirectory ("src")
-add_subdirectory ("hoge")
